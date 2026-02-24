@@ -1,0 +1,257 @@
+[gd_scene format=3 uid="uid://dcs8hd85x5vgx"]
+
+[ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="1_xdvgc"]
+[ext_resource type="Theme" uid="uid://bt8bcn10cqdq1" path="res://assets/custom_style.tres" id="2_upctu"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_upctu"]
+font = ExtResource("1_xdvgc")
+font_size = 35
+
+[sub_resource type="LabelSettings" id="LabelSettings_xdvgc"]
+font_size = 18
+
+[sub_resource type="GDScript" id="GDScript_upctu"]
+script/source = "extends Button
+
+@export var hover_scale: Vector2 = Vector2(1.1, 1.1)
+@export var pressed_scale: Vector2 = Vector2(0.9, 0.9)
+
+var _current_tween: Tween
+
+func _ready() -> void:
+	mouse_entered.connect(_button_enter)
+	mouse_exited.connect(_button_exit)
+	button_down.connect(_button_down)  # 改为 button_down
+	button_up.connect(_button_up)      # 添加 button_up
+	
+	await get_tree().process_frame
+	_init_pivot()
+
+func _init_pivot() -> void:
+	pivot_offset = size / 2.0
+
+func _button_enter() -> void:
+	_kill_current_tween()
+	_current_tween = create_tween()
+	_current_tween.tween_property(self, \"scale\", hover_scale, 0.1).set_trans(Tween.TRANS_SINE)
+
+func _button_exit() -> void:
+	_kill_current_tween()
+	_current_tween = create_tween()
+	_current_tween.tween_property(self, \"scale\", Vector2.ONE, 0.1).set_trans(Tween.TRANS_SINE)
+
+func _button_down() -> void:  # 按下瞬间触发
+	_kill_current_tween()
+	_current_tween = create_tween()
+	_current_tween.tween_property(self, \"scale\", pressed_scale, 0.06).set_trans(Tween.TRANS_SINE)
+
+func _button_up() -> void:  # 松开时触发
+	_kill_current_tween()
+	_current_tween = create_tween()
+	
+	# 检查鼠标是否还在按钮上
+	if is_mouse_over():
+		_current_tween.tween_property(self, \"scale\", hover_scale, 0.12).set_trans(Tween.TRANS_SINE)
+	else:
+		_current_tween.tween_property(self, \"scale\", Vector2.ONE, 0.12).set_trans(Tween.TRANS_SINE)
+
+# 辅助函数：检查鼠标是否在按钮上
+func is_mouse_over() -> bool:
+	return get_global_rect().has_point(get_global_mouse_position())
+
+# 辅助函数：中断当前动画
+func _kill_current_tween() -> void:
+	if _current_tween and _current_tween.is_running():
+		_current_tween.kill()
+"
+
+[sub_resource type="GDScript" id="GDScript_11y2r"]
+script/source = "extends Button
+
+@export var hover_scale: Vector2 = Vector2(1.1, 1.1)
+@export var pressed_scale: Vector2 = Vector2(0.9, 0.9)
+
+var _current_tween: Tween
+
+func _ready() -> void:
+	mouse_entered.connect(_button_enter)
+	mouse_exited.connect(_button_exit)
+	button_down.connect(_button_down)  # 改为 button_down
+	button_up.connect(_button_up)      # 添加 button_up
+	
+	await get_tree().process_frame
+	_init_pivot()
+
+func _init_pivot() -> void:
+	pivot_offset = size / 2.0
+
+func _button_enter() -> void:
+	_kill_current_tween()
+	_current_tween = create_tween()
+	_current_tween.tween_property(self, \"scale\", hover_scale, 0.1).set_trans(Tween.TRANS_SINE)
+
+func _button_exit() -> void:
+	_kill_current_tween()
+	_current_tween = create_tween()
+	_current_tween.tween_property(self, \"scale\", Vector2.ONE, 0.1).set_trans(Tween.TRANS_SINE)
+
+func _button_down() -> void:  # 按下瞬间触发
+	_kill_current_tween()
+	_current_tween = create_tween()
+	_current_tween.tween_property(self, \"scale\", pressed_scale, 0.06).set_trans(Tween.TRANS_SINE)
+
+func _button_up() -> void:  # 松开时触发
+	_kill_current_tween()
+	_current_tween = create_tween()
+	
+	# 检查鼠标是否还在按钮上
+	if is_mouse_over():
+		_current_tween.tween_property(self, \"scale\", hover_scale, 0.12).set_trans(Tween.TRANS_SINE)
+	else:
+		_current_tween.tween_property(self, \"scale\", Vector2.ONE, 0.12).set_trans(Tween.TRANS_SINE)
+
+# 辅助函数：检查鼠标是否在按钮上
+func is_mouse_over() -> bool:
+	return get_global_rect().has_point(get_global_mouse_position())
+
+# 辅助函数：中断当前动画
+func _kill_current_tween() -> void:
+	if _current_tween and _current_tween.is_running():
+		_current_tween.kill()
+"
+
+[sub_resource type="GDScript" id="GDScript_o0tnf"]
+script/source = "extends Button
+
+@export var hover_scale: Vector2 = Vector2(1.1, 1.1)
+@export var pressed_scale: Vector2 = Vector2(0.9, 0.9)
+
+var _current_tween: Tween
+
+func _ready() -> void:
+	mouse_entered.connect(_button_enter)
+	mouse_exited.connect(_button_exit)
+	button_down.connect(_button_down)  # 改为 button_down
+	button_up.connect(_button_up)      # 添加 button_up
+	
+	await get_tree().process_frame
+	_init_pivot()
+
+func _init_pivot() -> void:
+	pivot_offset = size / 2.0
+
+func _button_enter() -> void:
+	_kill_current_tween()
+	_current_tween = create_tween()
+	_current_tween.tween_property(self, \"scale\", hover_scale, 0.1).set_trans(Tween.TRANS_SINE)
+
+func _button_exit() -> void:
+	_kill_current_tween()
+	_current_tween = create_tween()
+	_current_tween.tween_property(self, \"scale\", Vector2.ONE, 0.1).set_trans(Tween.TRANS_SINE)
+
+func _button_down() -> void:  # 按下瞬间触发
+	_kill_current_tween()
+	_current_tween = create_tween()
+	_current_tween.tween_property(self, \"scale\", pressed_scale, 0.06).set_trans(Tween.TRANS_SINE)
+
+func _button_up() -> void:  # 松开时触发
+	_kill_current_tween()
+	_current_tween = create_tween()
+	
+	# 检查鼠标是否还在按钮上
+	if is_mouse_over():
+		_current_tween.tween_property(self, \"scale\", hover_scale, 0.12).set_trans(Tween.TRANS_SINE)
+	else:
+		_current_tween.tween_property(self, \"scale\", Vector2.ONE, 0.12).set_trans(Tween.TRANS_SINE)
+
+# 辅助函数：检查鼠标是否在按钮上
+func is_mouse_over() -> bool:
+	return get_global_rect().has_point(get_global_mouse_position())
+
+# 辅助函数：中断当前动画
+func _kill_current_tween() -> void:
+	if _current_tween and _current_tween.is_running():
+		_current_tween.kill()
+"
+
+[node name="Menu" type="Control" unique_id=358673526]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BackgroundColorRect" type="ColorRect" parent="." unique_id=934707855]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.13333334, 0.15686275, 0.19215687, 1)
+
+[node name="Titles" type="VBoxContainer" parent="." unique_id=1072016102]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -164.0
+offset_top = -187.0
+offset_right = 164.0
+offset_bottom = -114.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 5
+
+[node name="Title" type="Label" parent="Titles" unique_id=717568343]
+layout_mode = 2
+text = "人生重开模拟器 月计版"
+label_settings = SubResource("LabelSettings_upctu")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Titles" unique_id=699895005]
+layout_mode = 2
+text = "这垃圾的都市人生一秒也不想呆了"
+label_settings = SubResource("LabelSettings_xdvgc")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Buttons" type="VBoxContainer" parent="." unique_id=922940677]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.56200004
+anchor_right = 0.5
+anchor_bottom = 0.56200004
+offset_left = -152.0
+offset_top = -70.176025
+offset_right = 152.0
+offset_bottom = 69.823975
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="StartGameBtn" type="Button" parent="Buttons" unique_id=1725059346]
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("2_upctu")
+text = "立即重开"
+script = SubResource("GDScript_upctu")
+
+[node name="AchievementBtn" type="Button" parent="Buttons" unique_id=837480910]
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("2_upctu")
+text = "成就"
+script = SubResource("GDScript_11y2r")
+
+[node name="SettingsBtn" type="Button" parent="Buttons" unique_id=572722526]
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("2_upctu")
+text = "设置"
+script = SubResource("GDScript_o0tnf")

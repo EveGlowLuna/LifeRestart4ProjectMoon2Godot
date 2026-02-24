@@ -1,0 +1,38 @@
+[gd_resource type="Theme" format=3 uid="uid://bt8bcn10cqdq1"]
+
+[ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="1_4giib"]
+
+[sub_resource type="FontVariation" id="FontVariation_27tyc"]
+base_font = ExtResource("1_4giib")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r80on"]
+bg_color = Color(0.3266811, 0.4722619, 0.9406206, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xdvgc"]
+bg_color = Color(0.23172331, 0.36319697, 0.8688457, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1sbhl"]
+bg_color = Color(0.15750962, 0.26251864, 0.73618025, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[resource]
+Button/font_sizes/font_size = 16
+Button/fonts/font = SubResource("FontVariation_27tyc")
+Button/styles/hover = SubResource("StyleBoxFlat_r80on")
+Button/styles/normal = SubResource("StyleBoxFlat_xdvgc")
+Button/styles/pressed = SubResource("StyleBoxFlat_1sbhl")
