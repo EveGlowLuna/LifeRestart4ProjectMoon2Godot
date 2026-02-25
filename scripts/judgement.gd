@@ -6,7 +6,7 @@ enum JudgementLevel {
 }
 
 enum JudgementType{
-	HCHR, HINT, HSTR, HMNY, HSPR, HAGE
+	HCHR, HINT, HSTR, HMNY, HSPR, HAGE, SUM
 }
 
 var HCHR_judgement: Dictionary = {
@@ -247,6 +247,41 @@ var HAGE_judgement: Dictionary = {
 	} 
 }
 
+var SUM_judgement: Dictionary = { 
+	0: { 
+		JudgementLevel.judge: "地狱", 
+		JudgementLevel.level: 0 
+	}, 
+	41: { 
+		JudgementLevel.judge: "折磨", 
+		JudgementLevel.level: 0 
+	}, 
+	50: { 
+		JudgementLevel.judge: "不佳", 
+		JudgementLevel.level: 0 
+	}, 
+	60: { 
+		JudgementLevel.judge: "普通", 
+		JudgementLevel.level: 0 
+	}, 
+	80: { 
+		JudgementLevel.judge: "优秀", 
+		JudgementLevel.level: 1 
+	}, 
+	100: { 
+		JudgementLevel.judge: "罕见", 
+		JudgementLevel.level: 2 
+	}, 
+	110: { 
+		JudgementLevel.judge: "逆天", 
+		JudgementLevel.level: 3 
+	}, 
+	120: { 
+		JudgementLevel.judge: "传说", 
+		JudgementLevel.level: 3 
+	} 
+}
+
 func judge(type: JudgementType, value: int) -> Dictionary:
 	match JudgementType:
 		JudgementType.HCHR:
@@ -291,4 +326,11 @@ func judge(type: JudgementType, value: int) -> Dictionary:
 				if value <= key:
 					return HAGE_judgement[key]
 			return HAGE_judgement[keys.back()]
+		JudgementType.SUM:
+			var keys = SUM_judgement.keys()
+			keys.sort()
+			for key in keys:
+				if value <= key:
+					return SUM_judgement[key]
+			return SUM_judgement[keys.back()]
 	return {}

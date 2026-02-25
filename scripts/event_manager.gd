@@ -33,6 +33,34 @@ func random_talent() -> Array:
 
 func apply_talent(talents: Array):
 	propertydata_ins.status[PropertyData.Types.TLT] = talents
+	var replaced_talents = []
+	for i in talents:
+		if talent_ins._talents[str(i)].has("replacement"):
+			var replaced = talent_ins.apply_replacement(int(i))
+			propertydata_ins.status[PropertyData.Types.TLT].earse(i)
+			propertydata_ins.status[PropertyData.Types.TLT].append(replaced)
+			replaced_talents.append({
+			"origin_talent": talent_ins._talents[str(i)]["id"],
+			"replaced_talent": replaced
+			})
+	return replaced_talents
+
+func start_game(selected_talent):
+	
+	var replaced_talents = apply_talent(selected_talent)
+	propertydata_ins.RESET()
+	
+	for item in propertydata_ins.status[PropertyData.Types.TLT]:
+		if talent_ins._talents[str(item)].has("effect") and !talent_ins._talents[str(item)].has("condition"):
+			propertydata_ins.apply_effects(talent_ins._talents[str(item)]["effect"])
+	
+	var gained_achv = gainACHV(Achievement.GainAchivementOpportunity.START)
+	# 不用返回修改了的数值因为数值在游戏内实时显示
+	return {
+	"replaced_talents": replaced_talents,
+	"gained_achievement": gained_achv
+	}
+	
 
 func check_event(event_id: int, ignore_no_random: bool = false) -> bool:
 	var event = eventlist[str(event_id)]
@@ -52,6 +80,28 @@ func check_event(event_id: int, ignore_no_random: bool = false) -> bool:
 			propertydata_ins.status)
 	return true
 
+func summary_game():
+	return {
+	"gained_achievement": gainACHV(Achievement.GainAchivementOpportunity.SUMMARY),
+	"judgement": {
+	PropertyData.Types.HCHR: judgement_ins.judge(Judgement.JudgementType.HCHR, propertydata_ins.status[PropertyData.Types.HCHR]),
+	PropertyData.Types.HINT: judgement_ins.judge(Judgement.JudgementType.HINT, propertydata_ins.status[PropertyData.Types.HINT]),
+	PropertyData.Types.HSTR: judgement_ins.judge(Judgement.JudgementType.HSTR, propertydata_ins.status[PropertyData.Types.HSTR]),
+	PropertyData.Types.HMNY: judgement_ins.judge(Judgement.JudgementType.HMNY, propertydata_ins.status[PropertyData.Types.HMNY]),
+	PropertyData.Types.HSPR: judgement_ins.judge(Judgement.JudgementType.HSPR, propertydata_ins.status[PropertyData.Types.HSPR]),
+	PropertyData.Types.HAGE: judgement_ins.judge(Judgement.JudgementType.HAGE, propertydata_ins.status[PropertyData.Types.HAGE]),
+	PropertyData.Types.SUM: judgement_ins.judge(Judgement.JudgementType.SUM, propertydata_ins.status[PropertyData.Types.SUM]),
+	}
+	}
+
+func restart_game():
+	# 重开次数+1
+	propertydata_ins.status[PropertyData.Types.TMS] += 1
+	# 检查END成就
+	gainACHV(Achievement.GainAchivementOpportunity.END)
+	# 保存数据
+	propertydata_ins.save_value()
+
 func random_event(year: int) -> int:
 	var availble_events = []
 	var processed_events = WeightParser.process(agelist[str(year)]["event"])
@@ -63,14 +113,6 @@ func random_event(year: int) -> int:
 		if check_event(int(item["id"])):
 			filtered_events.append(item)
 	availble_events = filtered_events
-	for item in propertydata_ins.status[PropertyData.Types.TLT]:
-		var to_remove = talent_ins.check_exclude(item)
-		if to_remove != null and to_remove != []:
-			for i in to_remove:
-				for rem in availble_events:
-					if rem["id"] == i:
-						availble_events.erase(rem)
-	
 	var final_event = WeightParser.random_select_from_parsed(availble_events)
 	if final_event != "":
 		return int(final_event)
@@ -91,17 +133,6 @@ func next_year() -> int:
 	propertydata_ins.status[PropertyData.Types.AGE] += 1
 	return propertydata_ins.status[PropertyData.Types.AGE]
 
-func start_game(talents: Array) -> void:
-	# 重置属性
-	propertydata_ins.RESET()
-	# 应用天赋
-	apply_talent(talents)
-	
-	# 计算初始状态
-	var init_data = talent_ins.get_init_status(talents)
-	propertydata_ins.status.merge(init_data)
-	# 检查START成就
-	gainACHV(Achievement.GainAchivementOpportunity.START)
 
 func execute_event(event_id: int) -> Dictionary:
 	var event = eventlist[str(event_id)]
@@ -147,9 +178,9 @@ func execute_next(from: int = -1) -> Dictionary:
 	if from != -1 and eventlist[str(from)].has("branch"):
 		var task_id = condition_parser_ins.parse_branch(eventlist[str(from)]["branch"], propertydata_ins.status[PropertyData.Types.EVT], propertydata_ins.status)
 		if task_id != "":
-			next_event = task_id
+			next_event = int(task_id)
 	else:
-		next_event = str(random_event(propertydata_ins.status[PropertyData.Types.AGE]))
+		next_event = random_event(propertydata_ins.status[PropertyData.Types.AGE])
 	var des = execute_event(next_event)
 	var gained_achivements = gainACHV(Achievement.GainAchivementOpportunity.TRAJECTORY)
 	return {
