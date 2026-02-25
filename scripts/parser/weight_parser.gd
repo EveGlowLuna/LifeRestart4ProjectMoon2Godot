@@ -50,3 +50,29 @@ func random_select(events: Array) -> String:
 	
 	# 容错：返回最后一个
 	return parsed_events[-1].id if not parsed_events.is_empty() else ""
+
+func random_select_from_parsed(events: Array) -> String:
+	if events.is_empty():
+		return ""
+	
+	# 第一步：解析所有事件，计算总权重
+	var parsed_events = []
+	var total_weight: float = 0.0
+	
+	for event_list in events:
+		var parsed = event_list
+		parsed_events.append(parsed)
+		total_weight += parsed.weight
+	
+	# 第二步：随机选择一个点
+	var random_point = randf() * total_weight
+	
+	# 第三步：遍历找到选中的事件
+	var current_sum: float = 0.0
+	for parsed in parsed_events:
+		current_sum += parsed.weight
+		if random_point < current_sum:
+			return parsed.id
+	
+	# 容错：返回最后一个
+	return parsed_events[-1].id if not parsed_events.is_empty() else ""

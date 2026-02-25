@@ -1,5 +1,10 @@
-extends Node
 class_name DataUtil
+
+var data: Dictionary = {}
+
+func _init():
+	init_data()
+	load_data()
 
 func init_data():
 	if !FileAccess.file_exists("user://user_data.json"):
@@ -12,19 +17,19 @@ func init_data():
 	else:
 		pass
 
-func get_data() -> Dictionary:
+func load_data():
 	var userdata = FileAccess.open("user://user_data.json",FileAccess.READ)
 	if not userdata:
-		return {}
+		return
 	var content = userdata.get_as_text()
-	var data = JSON.parse_string(content)
-	if data != null:
-		return data
-	return {}
+	var userdatavalue = JSON.parse_string(content)
+	if userdatavalue != null:
+		data = userdatavalue.duplicate(true)
 
-func update_data(new_data: Dictionary) -> bool:
+
+func update_data() -> bool:
 	var userdata = FileAccess.open("user://user_data.json",FileAccess.WRITE)
-	var res = userdata.store_string(JSON.stringify(new_data))
+	var res = userdata.store_string(JSON.stringify(data))
 	if res == false:
 		return false
 	return true

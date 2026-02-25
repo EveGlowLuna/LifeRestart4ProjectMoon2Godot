@@ -1,18 +1,18 @@
 extends RefCounted
 class_name ConditionParser
 
-func parse_branch(branch: Array, experienced_events: Array, current_status: Dictionary) -> Variant:
+func parse_branch(branch: Array, experienced_events: Array, current_status: Dictionary) -> String:
 
 	for item in branch:
 		var parts = item.split(":")
 		var condition = parts[0].replace(" ", "")
 		var task_id = parts[1].replace(" ", "")
 		
-		var is_satisfied = conditional_judgement(condition, experienced_events, current_status)
+		var is_satisfied: bool = conditional_judgement(condition, experienced_events, current_status)
 		if is_satisfied:
 			return task_id  # 返回第一个满足的，不继续检查后面的
 	
-	return null  # 没有满足的条件
+	return ""  # 没有满足的条件
 
 
 # 条件判断主函数
@@ -159,79 +159,45 @@ func _get_property_value(prop_name: String, current_status: Dictionary) -> float
 	return current_status.get(prop_name, 0.0)
 
 
-# 检查存在性（天赋、事件等）
+# 检查存在性（支持所有枚举类型）
 func _check_exists(left: String, right: String, experienced_events: Array, current_status: Dictionary, negate: bool) -> bool:
 	var ids = _parse_ids(right)
 	
-	match left:
-		"TLT":
-			# 检查天赋
-			var talents = current_status.get("TLT", [])
-			for id in ids:
-				var has = str(id) in talents
-				if negate:
-					if has:
-						return false
-				else:
-					if has:
-						return true
-			return negate  # 如果取反，没找到就是true
-		
-		"EVT":
-			# 检查本局事件
-			for id in ids:
-				var has = str(id) in experienced_events
-				if negate:
-					if has:
-						return false
-				else:
-					if has:
-						return true
-			return negate
-		
-		"AEVT":
-			# 检查全局事件
-			var global_events = current_status.get("AEVT", [])
-			for id in ids:
-				var has = str(id) in global_events
-				if negate:
-					if has:
-						return false
-				else:
-					if has:
-						return true
-			return negate
-		
-		"ATLT":
-			# 检查全局天赋
-			var global_talents = current_status.get("ATLT", [])
-			for id in ids:
-				var has = str(id) in global_talents
-				if negate:
-					if has:
-						return false
-				else:
-					if has:
-						return true
-			return negate
-		
-		"ACHV":
-			# 检查成就
-			var achievements = current_status.get("ACHV", [])
-			for id in ids:
-				var has = str(id) in achievements
-				if negate:
-					if has:
-						return false
-				else:
-					if has:
-						return true
-			return negate
-		
-		_:
-			push_error("未知的检查类型: " + left)
-			return false
-
+	# 通过PropertyData获取枚举值
+	var type_enum = PropertyData._string_enum_types.get(left)
+	if type_enum == null:
+		push_error("未知的检查类型: " + left)
+		return false
+	
+	# 从current_status获取对应的值
+	var value = current_status.get(type_enum)
+	if value == null:
+		# 如果current_status里没有，可能是数组类型需要特殊处理
+		match left:
+			"EVT", "AEVT", "TLT", "ATLT", "ACHV":
+				value = []
+			_:
+				value = 0
+	
+	# 根据值的类型决定如何检查
+	if typeof(value) == TYPE_ARRAY:
+		# 数组类型：检查ID是否在数组中
+		for id in ids:
+			var has = str(id) in value  # 统一转字符串比较
+			if negate:
+				if has:
+					return false
+			else:
+				if has:
+					return true
+		return negate  # 如果取反，没找到就是true
+	else:
+		# 数字类型：检查值是否等于ID（适用于AGE?[30]这种）
+		var has = value == ids[0]  # 数字类型只比较第一个ID
+		if negate:
+			return not has
+		else:
+			return has
 
 # 解析ID列表，支持单个和多个
 func _parse_ids(id_str: String) -> Array:
