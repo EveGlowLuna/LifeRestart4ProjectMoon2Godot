@@ -1,0 +1,634 @@
+[gd_scene format=3 uid="uid://g0p5fbh7defw"]
+
+[ext_resource type="Theme" uid="uid://bt8bcn10cqdq1" path="res://assets/custom_style.tres" id="1_8h2be"]
+[ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="1_e4ct5"]
+[ext_resource type="Script" uid="uid://wnlup63gxufd" path="res://scripts/button/button_anims.gd" id="2_lggaa"]
+
+[sub_resource type="GDScript" id="GDScript_lggaa"]
+script/source = "extends Control
+
+var talents_data: Array = []
+
+func _ready() -> void:
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	# 初始化时更新一次UI大小
+	call_deferred(\"_update_initial_ui\")
+
+
+func _on_viewport_size_changed() -> void:
+	if talents_data.size() > 0:
+		_update_button_layout()
+	else:
+		_update_initial_ui()
+	
+	# 总是更新属性UI（如果可见）
+	if $Control2.visible:
+		_update_status_ui()
+
+
+func _update_initial_ui() -> void:
+	var viewport_size = get_viewport_rect().size
+	var viewport_height = viewport_size.y
+	var viewport_width = viewport_size.x
+	
+	# 更新Start按钮的字体大小和按钮大小
+	var start_font_size = max(16, int(viewport_height * 0.025))
+	var start_button_height = max(40, int(viewport_height * 0.06))
+	var start_button_width = max(150, int(viewport_size.x * 0.15))
+	$Start.custom_minimum_size = Vector2(start_button_width, start_button_height)
+	$Start.begin_bulk_theme_override()
+	$Start.add_theme_font_size_override(\"font_size\", start_font_size)
+	$Start.end_bulk_theme_override()
+	
+	# 更新Title标签的字体大小 - 创建新的 LabelSettings 避免修改共享资源
+	var title_font_size = max(24, int(viewport_height * 0.05))
+	var new_label_settings = LabelSettings.new()
+	new_label_settings.font = $TitleLabel.label_settings.font
+	new_label_settings.font_size = title_font_size
+	$TitleLabel.label_settings = new_label_settings
+	
+	# 更新Control/RandomTLTBtn的字体大小
+	var random_btn_font_size = max(16, int(viewport_height * 0.025))
+	$Control/RandomTLTBtn.begin_bulk_theme_override()
+	$Control/RandomTLTBtn.add_theme_font_size_override(\"font_size\", random_btn_font_size)
+	$Control/RandomTLTBtn.end_bulk_theme_override()
+	
+	# 更新属性点分配UI的自适应
+	_update_status_ui()
+
+var button_style_L1 = load(\"res://assets/levels/rate_1_style.tres\")
+var button_style_L2 = load(\"res://assets/levels/rate_2_style.tres\")
+var button_style_L3 = load(\"res://assets/levels/rate_3_style.tres\")
+var button_style_L4 = load(\"res://assets/levels/rate_4_style.tres\")
+var button_style_L5 = load(\"res://assets/levels/rate_5_style.tres\")
+
+var button_style_L1p = load(\"res://assets/levels/rate_1p_style.tres\")
+var button_style_L2p = load(\"res://assets/levels/rate_2p_style.tres\")
+var button_style_L3p = load(\"res://assets/levels/rate_3p_style.tres\")
+var button_style_L4p = load(\"res://assets/levels/rate_4p_style.tres\")
+var button_style_L5p = load(\"res://assets/levels/rate_5p_style.tres\")
+
+var checked = []
+var talents: Array[int] = [] 
+var talent_buttons: Array = []  # 保存按钮引用
+var current_talent = []
+
+# 记录每个SpinBox的旧值，用于计算增量
+var prev_chr_value: int = 0
+var prev_int_value: int = 0
+var prev_str_value: int = 0
+var prev_mny_value: int = 0
+
+func _on_random_tlt_btn_pressed() -> void:
+	talents_data = EventManager.random_talent()
+	print(talents_data)
+	
+	# 清空之前的按钮
+	talent_buttons.clear()
+	
+	# 创建按钮
+	for i in range(talents_data.size()):
+		var button = Button.new()
+		var talent = talents_data[i]
+		talents.append(talent[\"id\"])
+		if talent.has(\"description\"):
+			button.text = talent[\"name\"] + \"  -  \" + talent[\"description\"]
+		else:
+			button.text = talent[\"name\"]
+		button.name = \"TLT\" + str(i + 1)
+		
+		# 先设置主题
+		match talent[\"grade\"]:
+			0:
+				button.theme = button_style_L1
+			1:
+				button.theme = button_style_L2
+			2:
+				button.theme = button_style_L3
+			3:
+				button.theme = button_style_L4
+			4:
+				button.theme = button_style_L5
+		
+		button.clip_text = true
+		button.pressed.connect(_on_button_pressed.bind(i))
+		$Control/VBoxContainer.add_child(button)
+		
+		# 保存按钮引用
+		talent_buttons.append(button)
+	
+	# 初始化布局
+	_update_button_layout()
+	
+	$Control/VBoxContainer.visible = true
+	$Control/RandomTLTBtn.visible = false
+	$Start.visible = true
+
+
+func _update_button_layout() -> void:
+	# 获取屏幕尺寸
+	var viewport_size = get_viewport_rect().size
+	var viewport_height = viewport_size.y
+	var viewport_width = viewport_size.x
+	
+	# 为 Start 按钮预留空间（底部 8%）
+	var start_button_space = viewport_height * 0.08
+	
+	# 计算可用高度（从10%到90%，减去Start按钮空间）
+	var available_height = viewport_height * 0.8 - start_button_space
+	var button_height = available_height / 15.0
+	
+	# 动态计算字体大小
+	var font_size = max(14, int(button_height * 0.45))
+	
+	# 动态计算按钮宽度
+	var button_width = min(viewport_width * 0.7, 700)
+	
+	# Control/VBoxContainer 向上移：从 10% 开始（之前是12%）
+	var vbox_start_y = viewport_height * 0.10
+	$Control/VBoxContainer.position = Vector2(viewport_width / 2.0 - button_width / 2.0, vbox_start_y)
+	$Control/VBoxContainer.size = Vector2(button_width, available_height)
+	
+	# 更新所有按钮 - 使用 begin_bulk_theme_override 确保覆盖生效
+	for child in $Control/VBoxContainer.get_children():
+		if child is Button:
+			child.custom_minimum_size.y = button_height
+			child.begin_bulk_theme_override()
+			child.add_theme_font_size_override(\"font_size\", font_size)
+			child.end_bulk_theme_override()
+	
+	# 更新Start按钮的字体大小和按钮大小
+	var start_font_size = max(16, int(viewport_height * 0.025))
+	var start_button_height = max(40, int(viewport_height * 0.06))
+	var start_button_width = max(150, int(viewport_width * 0.15))
+	$Start.custom_minimum_size = Vector2(start_button_width, start_button_height)
+	$Start.begin_bulk_theme_override()
+	$Start.add_theme_font_size_override(\"font_size\", start_font_size)
+	$Start.end_bulk_theme_override()
+	
+	# 更新Title标签的字体大小
+	var title_font_size = max(24, int(viewport_height * 0.05))
+	var new_label_settings = LabelSettings.new()
+	new_label_settings.font = $TitleLabel.label_settings.font
+	new_label_settings.font_size = title_font_size
+	$TitleLabel.label_settings = new_label_settings
+
+
+func _on_button_pressed(button_index: int):
+	print(\"按钮 TLT\" + str(button_index) + \" 被点击了\")
+	
+	# 切换选中状态
+	if checked.has(button_index):
+		checked.erase(button_index)
+		current_talent.erase(talents_data[button_index][\"id\"])
+	else:
+		checked.append(button_index)
+		current_talent.append(talents_data[button_index][\"id\"])
+	
+	# 先解除所有的禁用，下面重新添加
+	if checked.size() < 4:
+		for i in talent_buttons.size():
+			var btn = talent_buttons[i]
+			btn.disabled = false
+	
+	# 检查 Exclude
+	var excluded = []
+	for i in current_talent:
+		var arr = EventManager.talent_ins.check_exclude(i)
+		for item in arr:
+			if not excluded.has(int(item)):
+				excluded.append(int(item))
+	for i in range(talents.size()):
+		if excluded.has(talents[i]):
+			var btn = talent_buttons[i]
+			btn.disabled = true
+	
+	# 获取按钮实例
+	var button = talent_buttons[button_index]
+	
+	var talent = talents_data[button_index]
+	var grade = talent[\"grade\"]
+	# 根据选中状态切换主题
+	if checked.has(button_index):
+		# 切换到选中主题（带p后缀）
+		match grade:
+			0:
+				button.theme = button_style_L1p
+			1:
+				button.theme = button_style_L2p
+			2:
+				button.theme = button_style_L3p
+			3:
+				button.theme = button_style_L4p
+			4:
+				button.theme = button_style_L5p
+	else:
+		# 切换回普通主题
+		match grade:
+			0:
+				button.theme = button_style_L1
+			1:
+				button.theme = button_style_L2
+			2:
+				button.theme = button_style_L3
+			3:
+				button.theme = button_style_L4
+			4:
+				button.theme = button_style_L5
+	if checked.size() == 4:
+		for i in talent_buttons.size():
+			var btn = talent_buttons[i]
+			if current_talent.has(talents[i]):
+				btn.disabled = false
+			else:
+				btn.disabled = true
+	
+	# 重新应用字体大小
+	var viewport_height = get_viewport_rect().size.y
+	var available_height = viewport_height * 0.8 - viewport_height * 0.08
+	var button_height = available_height / 15.0
+	var font_size = max(14, int(button_height * 0.45))
+	button.begin_bulk_theme_override()
+	button.add_theme_font_size_override(\"font_size\", font_size)
+	button.end_bulk_theme_override()
+
+
+func _update_status_ui() -> void:
+	# 获取屏幕尺寸
+	var viewport_size = get_viewport_rect().size
+	var viewport_height = viewport_size.y
+	var viewport_width = viewport_size.x
+	
+	# 计算属性UI的字体大小
+	var status_title_font_size = max(16, int(viewport_height * 0.03))
+	var status_label_font_size = max(14, int(viewport_height * 0.025))
+	
+	# 计算VBox的大小和位置（增加高度以容纳按钮）
+	var vbox_width = min(viewport_width * 0.85, 450)  # 从30%增加到85%，最大宽度从350增加到450
+	var vbox_height = viewport_height * 0.5  # 从40%增加到50%
+	
+	# 位置：向下移动（从30%改为35%）
+	var vbox_y = viewport_height * 0.35
+	
+	# 更新status_vbox的位置和大小
+	$Control2/status_vbox.position = Vector2(viewport_width / 2.0 - vbox_width / 2.0, vbox_y - vbox_height / 2.0)
+	$Control2/status_vbox.size = Vector2(vbox_width, vbox_height)
+	
+	# 更新\"可用属性点\"标签的字体
+	var status_point_settings = LabelSettings.new()
+	status_point_settings.font = $Control2/status_vbox/status_point.label_settings.font
+	status_point_settings.font_size = status_title_font_size
+	$Control2/status_vbox/status_point.label_settings = status_point_settings
+	
+	# 计算每个HBoxContainer的最小高度
+	var hbox_height = max(30, int(viewport_height * 0.05))
+	
+	# 更新各个属性标签的字体和HBox高度
+	for prop in [\"CHR\", \"INT\", \"STR\", \"MNY\"]:
+		var hbox = $Control2/status_vbox.get_node(prop)
+		hbox.custom_minimum_size.y = hbox_height
+		
+		var label = hbox.get_node(\"Label\")
+		var label_settings = LabelSettings.new()
+		label_settings.font = label.label_settings.font
+		label_settings.font_size = status_label_font_size
+		label.label_settings = label_settings
+		
+		# 更新SpinBox的字体大小和最小高度
+		var spinbox = hbox.get_node(\"SpinBox\")
+		spinbox.custom_minimum_size.y = hbox_height
+		spinbox.begin_bulk_theme_override()
+		spinbox.add_theme_font_size_override(\"font_size\", status_label_font_size)
+		spinbox.end_bulk_theme_override()
+	
+	# 更新RandomPoint按钮的字体大小和高度
+	var button_font_size = max(14, int(viewport_height * 0.025))
+	var button_height = max(35, int(viewport_height * 0.055))
+	$Control2/status_vbox/RandomPoint.custom_minimum_size.y = button_height
+	$Control2/status_vbox/RandomPoint.begin_bulk_theme_override()
+	$Control2/status_vbox/RandomPoint.add_theme_font_size_override(\"font_size\", button_font_size)
+	$Control2/status_vbox/RandomPoint.end_bulk_theme_override()
+
+
+func _on_start_pressed() -> void:
+	if $Start.text == \"下一步\":
+		# 先检查按钮，再获取数量
+		if current_talent.size() > 4:
+			NotificationManager.show_notification(\"不可选择多于4个的天赋。\")
+			return
+		elif current_talent.size() < 4:
+			NotificationManager.show_notification(\"选择少于4个天赋。\")
+			return
+		var cstatus = EventManager.talent_ins.get_init_status(current_talent)
+		EventManager.status_point = 20 + cstatus[\"status\"]
+		print(current_talent)
+		print(cstatus)
+		$Control2/status_vbox/status_point.text = \"可用属性点：\" + str(EventManager.status_point)
+		$Control2/status_vbox/CHR/SpinBox.max_value = EventManager.status_point
+		$Control2/status_vbox/INT/SpinBox.max_value = EventManager.status_point
+		$Control2/status_vbox/STR/SpinBox.max_value = EventManager.status_point
+		$Control2/status_vbox/MNY/SpinBox.max_value = EventManager.status_point
+		
+		# 重置旧值记录
+		prev_chr_value = 0
+		prev_int_value = 0
+		prev_str_value = 0
+		prev_mny_value = 0
+		
+		$Control/VBoxContainer.visible = false
+		$Start.text = \"开始新人生\"
+		$Control2.visible = true
+	else:
+		# 如果是开始新人生，先看属性点分没分完，再下一步
+		if EventManager.status_point > 0:
+			NotificationManager.show_notification(\"还有属性点没分配完。\")
+			return
+		# 设置属性
+		EventManager.propertydata_ins.status[PropertyData.Types.CHR] = $Control2/status_vbox/CHR/SpinBox.value
+		EventManager.propertydata_ins.status[PropertyData.Types.INT] = $Control2/status_vbox/INT/SpinBox.value
+		EventManager.propertydata_ins.status[PropertyData.Types.STR] = $Control2/status_vbox/STR/SpinBox.value
+		EventManager.propertydata_ins.status[PropertyData.Types.MNY] = $Control2/status_vbox/MNY/SpinBox.value
+		# 天赋在start_game有就不用管了😋
+
+
+func _on_spin_box_value_changed(value: float) -> void:
+	var new_value = int(value)
+	var delta = new_value - prev_chr_value
+	EventManager.status_point -= delta
+	prev_chr_value = new_value
+	
+	# 更新所有SpinBox的max_value
+	_update_all_spinbox_max_values()
+	
+	# 更新显示
+	$Control2/status_vbox/status_point.text = \"可用属性点：\" + str(EventManager.status_point)
+
+
+func _on_int_spin_box_value_changed(value: float) -> void:
+	var new_value = int(value)
+	var delta = new_value - prev_int_value
+	EventManager.status_point -= delta
+	prev_int_value = new_value
+	
+	# 更新所有SpinBox的max_value
+	_update_all_spinbox_max_values()
+	
+	# 更新显示
+	$Control2/status_vbox/status_point.text = \"可用属性点：\" + str(EventManager.status_point)
+
+
+func _on_str_spin_box_value_changed(value: float) -> void:
+	var new_value = int(value)
+	var delta = new_value - prev_str_value
+	EventManager.status_point -= delta
+	prev_str_value = new_value
+	
+	# 更新所有SpinBox的max_value
+	_update_all_spinbox_max_values()
+	
+	# 更新显示
+	$Control2/status_vbox/status_point.text = \"可用属性点：\" + str(EventManager.status_point)
+
+
+func _on_mny_spin_box_value_changed(value: float) -> void:
+	var new_value = int(value)
+	var delta = new_value - prev_mny_value
+	EventManager.status_point -= delta
+	prev_mny_value = new_value
+	
+	# 更新所有SpinBox的max_value
+	_update_all_spinbox_max_values()
+	
+	# 更新显示
+	$Control2/status_vbox/status_point.text = \"可用属性点：\" + str(EventManager.status_point)
+
+
+# 更新所有SpinBox的max_value
+func _update_all_spinbox_max_values() -> void:
+	var chr_spinbox = $Control2/status_vbox/CHR/SpinBox
+	var int_spinbox = $Control2/status_vbox/INT/SpinBox
+	var str_spinbox = $Control2/status_vbox/STR/SpinBox
+	var mny_spinbox = $Control2/status_vbox/MNY/SpinBox
+	
+	# 每个SpinBox的max_value = 当前值 + 剩余属性点
+	chr_spinbox.max_value = chr_spinbox.value + EventManager.status_point
+	int_spinbox.max_value = int_spinbox.value + EventManager.status_point
+	str_spinbox.max_value = str_spinbox.value + EventManager.status_point
+	mny_spinbox.max_value = mny_spinbox.value + EventManager.status_point
+"
+
+[sub_resource type="LabelSettings" id="LabelSettings_e4ct5"]
+font = ExtResource("1_e4ct5")
+font_size = 19
+
+[sub_resource type="LabelSettings" id="LabelSettings_07hf6"]
+font = ExtResource("1_e4ct5")
+font_size = 18
+
+[sub_resource type="LabelSettings" id="LabelSettings_lggaa"]
+font = ExtResource("1_e4ct5")
+font_size = 35
+
+[node name="TalentSelector" type="Control" unique_id=291049382]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = SubResource("GDScript_lggaa")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1671492016]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.13333334, 0.15686275, 0.19215687, 1)
+
+[node name="Control" type="Control" parent="." unique_id=1804440179]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RandomTLTBtn" type="Button" parent="Control" unique_id=1883411439]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -82.5
+offset_top = -20.5
+offset_right = 82.5
+offset_bottom = 20.5
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_8h2be")
+text = "15连抽!"
+script = ExtResource("2_lggaa")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Control" unique_id=2006759843]
+visible = false
+layout_mode = 0
+
+[node name="Control2" type="Control" parent="." unique_id=1717986364]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="status_vbox" type="VBoxContainer" parent="Control2" unique_id=1520409048]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -141.0
+offset_top = -151.0
+offset_right = 146.5
+offset_bottom = 91.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="status_point" type="Label" parent="Control2/status_vbox" unique_id=96998126]
+layout_mode = 2
+text = "可用属性点：20"
+label_settings = SubResource("LabelSettings_e4ct5")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Placeholder4" type="Control" parent="Control2/status_vbox" unique_id=1096004081]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CHR" type="HBoxContainer" parent="Control2/status_vbox" unique_id=513179164]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Control2/status_vbox/CHR" unique_id=852554298]
+layout_mode = 2
+text = "运气"
+label_settings = SubResource("LabelSettings_07hf6")
+
+[node name="Placeholder" type="Control" parent="Control2/status_vbox/CHR" unique_id=797111358]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpinBox" type="SpinBox" parent="Control2/status_vbox/CHR" unique_id=76885993]
+layout_mode = 2
+
+[node name="Placeholder" type="Control" parent="Control2/status_vbox" unique_id=617201577]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="INT" type="HBoxContainer" parent="Control2/status_vbox" unique_id=892755030]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Control2/status_vbox/INT" unique_id=35367468]
+layout_mode = 2
+text = "智力"
+label_settings = SubResource("LabelSettings_07hf6")
+
+[node name="Placeholder" type="Control" parent="Control2/status_vbox/INT" unique_id=808248973]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpinBox" type="SpinBox" parent="Control2/status_vbox/INT" unique_id=1557310818]
+layout_mode = 2
+
+[node name="Placeholder2" type="Control" parent="Control2/status_vbox" unique_id=175557662]
+layout_mode = 2
+size_flags_vertical = 3
+metadata/_edit_lock_ = true
+
+[node name="STR" type="HBoxContainer" parent="Control2/status_vbox" unique_id=18637981]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Control2/status_vbox/STR" unique_id=1432216332]
+layout_mode = 2
+text = "体制"
+label_settings = SubResource("LabelSettings_07hf6")
+
+[node name="Placeholder" type="Control" parent="Control2/status_vbox/STR" unique_id=475184845]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpinBox" type="SpinBox" parent="Control2/status_vbox/STR" unique_id=1950976678]
+layout_mode = 2
+
+[node name="Placeholder3" type="Control" parent="Control2/status_vbox" unique_id=62743624]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MNY" type="HBoxContainer" parent="Control2/status_vbox" unique_id=166742403]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Control2/status_vbox/MNY" unique_id=337965674]
+layout_mode = 2
+text = "家境"
+label_settings = SubResource("LabelSettings_07hf6")
+
+[node name="Placeholder" type="Control" parent="Control2/status_vbox/MNY" unique_id=402136067]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpinBox" type="SpinBox" parent="Control2/status_vbox/MNY" unique_id=457678816]
+layout_mode = 2
+
+[node name="Placeholder5" type="Control" parent="Control2/status_vbox" unique_id=1364610982]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RandomPoint" type="Button" parent="Control2/status_vbox" unique_id=119808377]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+theme = ExtResource("1_8h2be")
+text = "随机分配"
+
+[node name="TitleLabel" type="Label" parent="." unique_id=2131765079]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.05
+anchor_right = 0.5
+anchor_bottom = 0.05
+offset_left = -70.0
+offset_top = -24.0
+offset_right = 70.0
+offset_bottom = 24.0
+grow_horizontal = 2
+text = "天赋选择"
+label_settings = SubResource("LabelSettings_lggaa")
+
+[node name="Start" type="Button" parent="." unique_id=711651619]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.95
+anchor_right = 0.5
+anchor_bottom = 0.95
+offset_left = -85.0
+offset_top = -20.0
+offset_right = 82.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_8h2be")
+text = "下一步"
+script = ExtResource("2_lggaa")
+
+[connection signal="pressed" from="Control/RandomTLTBtn" to="." method="_on_random_tlt_btn_pressed"]
+[connection signal="value_changed" from="Control2/status_vbox/CHR/SpinBox" to="." method="_on_spin_box_value_changed"]
+[connection signal="value_changed" from="Control2/status_vbox/INT/SpinBox" to="." method="_on_int_spin_box_value_changed"]
+[connection signal="value_changed" from="Control2/status_vbox/STR/SpinBox" to="." method="_on_str_spin_box_value_changed"]
+[connection signal="value_changed" from="Control2/status_vbox/MNY/SpinBox" to="." method="_on_mny_spin_box_value_changed"]
+[connection signal="pressed" from="Start" to="." method="_on_start_pressed"]

@@ -1,4 +1,4 @@
-class_name EventManager extends RefCounted
+extends Node
 
 var propertydata_ins = PropertyData.new()
 var achievement_ins = Achievement.new()
@@ -6,8 +6,10 @@ var judgement_ins = Judgement.new()
 var talent_ins = TalentParser.new()
 var weight_ins = WeightParser.new()
 var condition_parser_ins = ConditionParser.new()
+var status_point = 20
 var agelist:Dictionary = {}
 var eventlist:Dictionary = {}
+var temp
 
 func _init() -> void:
 	var fa = FileAccess.open("res://data/age.json", FileAccess.READ)
@@ -19,19 +21,15 @@ func _init() -> void:
 	
 
 func random_talent() -> Array:
-	var all_talent_ids = []
-	for id in talent_ins._talents:
-		var talent = talent_ins._talents[id]
-		# 跳过独占天赋
-		if talent.has("exclusive") and talent["exclusive"] == 1:
-			continue
-		all_talent_ids.append(int(id))
-	
-	all_talent_ids.shuffle()
-	var count = min(15, all_talent_ids.size())
-	return all_talent_ids.slice(0, count)
+	# 获取加成所需的数据
+	var addition_values = {
+		"TMS": propertydata_ins.status.get(PropertyData.Types.TMS, 0),
+		"CACHV": propertydata_ins.status.get(PropertyData.Types.CACHV, 0)
+	}
+	# 调用带概率的版本
+	return talent_ins.random_talent(null, addition_values)
 
-func apply_talent(talents: Array):
+func apply_talent(talents: Array[int]):
 	propertydata_ins.status[PropertyData.Types.TLT] = talents
 	var replaced_talents = []
 	for i in talents:
@@ -104,16 +102,16 @@ func restart_game():
 
 func random_event(year: int) -> int:
 	var availble_events = []
-	var processed_events = WeightParser.process(agelist[str(year)]["event"])
+	var processed_events = weight_ins.process(agelist[str(year)]["event"])
 	for item in processed_events:
-		var parsed_events = WeightParser.parse_event(item)
+		var parsed_events = weight_ins.parse_event(item)
 		availble_events.append(parsed_events)
 	var filtered_events = []
 	for item in availble_events:
 		if check_event(int(item["id"])):
 			filtered_events.append(item)
 	availble_events = filtered_events
-	var final_event = WeightParser.random_select_from_parsed(availble_events)
+	var final_event = weight_ins.random_select_from_parsed(availble_events)
 	if final_event != "":
 		return int(final_event)
 	return -1

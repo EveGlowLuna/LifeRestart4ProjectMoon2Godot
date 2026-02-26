@@ -1,4 +1,4 @@
-extends Node
+class_name WeightParser extends Node
 
 func process(data: Array) -> Array:
 	"""将不统一的id格式转化为统一格式(int->str)"""

@@ -114,7 +114,7 @@ static var _string_enum_types = {
 
 var origin_status: Dictionary = {
 	Types.AGE: 0, Types.CHR: 0, Types.INT: 0, Types.STR: 0,
-	Types.MNY: 0, Types.SPR: 0, Types.LIF: 1,  # LIF默认1
+	Types.MNY: 0, Types.SPR: 5, Types.LIF: 1,  # LIF默认1
 	Types.TLT: [], Types.EVT: [], Types.TMS: 0,
 	
 	Types.LAGE: 999999, Types.HAGE: -999999,  # 极值初始化为极端值

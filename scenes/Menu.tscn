@@ -10,6 +10,20 @@ font_size = 35
 [sub_resource type="LabelSettings" id="LabelSettings_xdvgc"]
 font_size = 18
 
+[sub_resource type="GDScript" id="GDScript_b6cxs"]
+script/source = "extends VBoxContainer
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	await get_tree().process_frame
+	resized.connect(_init_pivot)
+	_init_pivot()
+
+func _init_pivot() -> void:
+	pivot_offset = size / 2.0
+"
+
 [sub_resource type="GDScript" id="GDScript_upctu"]
 script/source = "extends Button
 
@@ -18,12 +32,12 @@ script/source = "extends Button
 
 var _current_tween: Tween
 
+
 func _ready() -> void:
 	mouse_entered.connect(_button_enter)
 	mouse_exited.connect(_button_exit)
 	button_down.connect(_button_down)  # 改为 button_down
 	button_up.connect(_button_up)      # 添加 button_up
-	
 	await get_tree().process_frame
 	_init_pivot()
 
@@ -63,6 +77,10 @@ func is_mouse_over() -> bool:
 func _kill_current_tween() -> void:
 	if _current_tween and _current_tween.is_running():
 		_current_tween.kill()
+
+
+func _on_pressed() -> void:
+	TransitionManager.transition_to(\"res://scenes/TalentSelector.tscn\")
 "
 
 [sub_resource type="GDScript" id="GDScript_11y2r"]
@@ -234,6 +252,7 @@ offset_right = 152.0
 offset_bottom = 69.823975
 grow_horizontal = 2
 grow_vertical = 2
+script = SubResource("GDScript_b6cxs")
 
 [node name="StartGameBtn" type="Button" parent="Buttons" unique_id=1725059346]
 layout_mode = 2
@@ -255,3 +274,5 @@ size_flags_vertical = 3
 theme = ExtResource("2_upctu")
 text = "设置"
 script = SubResource("GDScript_o0tnf")
+
+[connection signal="pressed" from="Buttons/StartGameBtn" to="Buttons/StartGameBtn" method="_on_pressed"]

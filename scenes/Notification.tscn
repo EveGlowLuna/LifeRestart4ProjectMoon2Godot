@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=3 uid="uid://drwhskotyn6s7"]
+
+[ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="1_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.2, 0.23, 0.27, 0.95)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 4
+shadow_offset = Vector2(2, 2)
+
+[sub_resource type="LabelSettings" id="LabelSettings_text"]
+font = ExtResource("1_font")
+font_size = 16
+
+[node name="Notification" type="PanelContainer"]
+custom_minimum_size = Vector2(300, 80)
+offset_right = 300.0
+offset_bottom = 80.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 15
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 15
+theme_override_constants/margin_bottom = 10
+
+[node name="Label" type="Label" parent="MarginContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(270, 0)
+text = "通知内容"
+label_settings = SubResource("LabelSettings_text")
+autowrap_mode = 3

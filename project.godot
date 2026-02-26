@@ -19,11 +19,12 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-WeightParser="*uid://be1sclc8oii55"
+EventManager="*uid://dgfsktvn50jt4"
+TransitionManager="*uid://dvo33optv1o7g"
+NotificationManager="*res://scripts/notification_manager.gd"
 
 [display]
 
-window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
 [dotnet]
@@ -37,3 +38,4 @@ project/assembly_name="LifeRestart4ProjectMoon"
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+textures/vram_compression/import_etc2_astc=true
