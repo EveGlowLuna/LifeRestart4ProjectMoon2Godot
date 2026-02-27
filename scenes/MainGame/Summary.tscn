@@ -40,6 +40,9 @@ var judgement:Dictionary = {
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	# 先计算总评
+	EventManager.propertydata_ins.status[PropertyData.Types.SUM] = EventManager.propertydata_ins.calculate_sum()
+	
 	var hchr_result = EventManager.judgement_ins.judge(Judgement.JudgementType.HCHR, EventManager.propertydata_ins.status[PropertyData.Types.HCHR])
 	judgement[\"HCHR\"][\"MSG\"] = hchr_result[Judgement.JudgementLevel.judge]
 	judgement[\"HCHR\"][\"LEVEL\"] = hchr_result[Judgement.JudgementLevel.level]
@@ -142,9 +145,10 @@ func _populate_talent_options():
 		var talent_info = EventManager.talent_ins.get_talent_info(int(talent_id))
 		var talent_name = talent_info[\"name\"]
 		var talent_grade = talent_info[\"grade\"]
+		var talent_description = talent_info[\"description\"]
 		
-		# 格式化显示文本：天赋名(稀有程度：等级)
-		var display_text = talent_name + \"(稀有程度：\" + str(talent_grade + 1) + \")\"
+		# 格式化显示文本：天赋名(介绍)(稀有程度：等级)
+		var display_text = talent_name + \"(\" + talent_description + \")(稀有程度：\" + str(talent_grade + 1) + \")\"
 		
 		# 添加选项
 		option_button.add_item(display_text)

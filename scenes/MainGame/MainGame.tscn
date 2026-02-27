@@ -11,6 +11,13 @@ var eventshower = preload(\"res://scenes/MainGame/components/event_panel.tscn\")
 
 var is_dead = false
 
+# 自动播放相关变量
+enum AutoMode { OFF, SPEED_1X, SPEED_2X }
+var auto_mode: AutoMode = AutoMode.OFF
+var auto_timer: Timer = null
+var long_press_timer: Timer = null
+var is_long_pressing: bool = false
+
 func _ready() -> void:
 	
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -22,6 +29,19 @@ func _ready() -> void:
 	var game_init_data = EventManager.start_game(EventManager.propertydata_ins.status[PropertyData._string_enum_types[\"TLT\"]])
 	replace_talents_message(game_init_data[\"replaced_talents\"])
 	gained_achievement_message(game_init_data[\"gained_achievement\"])
+	
+	# 初始化自动播放定时器
+	auto_timer = Timer.new()
+	auto_timer.one_shot = false
+	auto_timer.timeout.connect(_on_auto_timer_timeout)
+	add_child(auto_timer)
+	
+	# 初始化长按定时器
+	long_press_timer = Timer.new()
+	long_press_timer.one_shot = true
+	long_press_timer.wait_time = 2.0
+	long_press_timer.timeout.connect(_on_long_press_timeout)
+	add_child(long_press_timer)
 		
 
 func replace_talents_message(talents: Array):
@@ -29,12 +49,14 @@ func replace_talents_message(talents: Array):
 	var tlt_names = []
 	if talents.size() > 0:
 		for item in talents:
-			tlt_names.append(EventManager.talent_ins._talents[str(talents[item])][\"name\"])
+			# item 是一个字典: {\"origin_talent\": id, \"replaced_talent\": id}
+			var replaced_id = item[\"replaced_talent\"]
+			tlt_names.append(EventManager.talent_ins._talents[str(replaced_id)][\"name\"])
 		if tlt_names.size() > 0:
 			msg = \"替换了%s个天赋，分别是\" % str(tlt_names.size())
-			for item in tlt_names.size():
-				msg += \"%s\" % tlt_names[item]
-				if tlt_names[-1] != tlt_names[item]:
+			for i in tlt_names.size():
+				msg += \"%s\" % tlt_names[i]
+				if i < tlt_names.size() - 1:
 					msg += \"、\"
 	if msg != \"\":
 		NotificationManager.show_notification(msg)
@@ -97,20 +119,56 @@ func _update_ui_scale() -> void:
 #endregion
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		# 获取鼠标位置
-		var mouse_pos = get_viewport().get_mouse_position()
-		var margin_container = $CanvasLayer/VBoxContainer/MarginContainer
-		
-		# 检查鼠标是否在 MarginContainer 的区域内
-		var rect = margin_container.get_global_rect()
-		if rect.has_point(mouse_pos):
-			next_year()
-			# 标记事件已处理
-			get_viewport().set_input_as_handled()
+	# 检测右键点击（PC端）
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_RIGHT:
+			if event.pressed:
+				# 检查是否有鼠标设备（PC端）
+				if DisplayServer.get_name() != \"Android\" and DisplayServer.get_name() != \"iOS\":
+					# PC端：右键立即关闭自动播放
+					if auto_mode != AutoMode.OFF:
+						stop_auto_play()
+						get_viewport().set_input_as_handled()
+				else:
+					# 移动端：开始长按计时
+					is_long_pressing = true
+					long_press_timer.start()
+			else:
+				# 移动端：松开时取消长按
+				if is_long_pressing:
+					is_long_pressing = false
+					long_press_timer.stop()
+		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			# 获取鼠标位置
+			var mouse_pos = get_viewport().get_mouse_position()
+			var margin_container = $CanvasLayer/VBoxContainer/MarginContainer
+			
+			# 检查鼠标是否在 MarginContainer 的区域内
+			var rect = margin_container.get_global_rect()
+			if rect.has_point(mouse_pos):
+				next_year()
+				# 标记事件已处理
+				get_viewport().set_input_as_handled()
+	
+	# 检测屏幕触摸（移动端长按）
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			is_long_pressing = true
+			long_press_timer.start()
+		else:
+			if is_long_pressing:
+				is_long_pressing = false
+				long_press_timer.stop()
+	
 	if event is InputEventKey and event.pressed and event.keycode == KEY_SPACE:
 		next_year()
 		get_viewport().set_input_as_handled()
+
+# 长按超时回调
+func _on_long_press_timeout() -> void:
+	if is_long_pressing and auto_mode != AutoMode.OFF:
+		stop_auto_play()
+	is_long_pressing = false
 
 
 var privous_event: int = -1
@@ -209,7 +267,39 @@ func _add_event_panel(event: String = \"默认文本\", grade: int = 0):
 		scroll()
 
 func _on_auto_btn_pressed() -> void:
-	print(\"按钮被点击！\")
+	# 切换自动播放模式：关闭 -> 1x -> 2x -> 关闭
+	match auto_mode:
+		AutoMode.OFF:
+			# 开启1x速度（3秒/条）
+			auto_mode = AutoMode.SPEED_1X
+			auto_timer.wait_time = 3.0
+			auto_timer.start()
+			$CanvasLayer/VBoxContainer/StatusHBox/AutoBtn.text = \"1x\"
+			print(\"自动播放开启：1x速度\")
+		AutoMode.SPEED_1X:
+			# 切换到2x速度（1.5秒/条）
+			auto_mode = AutoMode.SPEED_2X
+			auto_timer.wait_time = 1.5
+			$CanvasLayer/VBoxContainer/StatusHBox/AutoBtn.text = \"2x\"
+			print(\"自动播放切换：2x速度\")
+		AutoMode.SPEED_2X:
+			# 关闭自动播放
+			stop_auto_play()
+
+# 停止自动播放
+func stop_auto_play() -> void:
+	auto_mode = AutoMode.OFF
+	auto_timer.stop()
+	$CanvasLayer/VBoxContainer/StatusHBox/AutoBtn.text = \"自动\"
+	print(\"自动播放关闭\")
+
+# 自动播放定时器回调
+func _on_auto_timer_timeout() -> void:
+	if not is_dead:
+		next_year()
+	else:
+		# 如果角色死亡，停止自动播放
+		stop_auto_play()
 
 
 func _on_summarize_pressed() -> void:

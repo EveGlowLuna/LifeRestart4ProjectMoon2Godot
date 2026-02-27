@@ -30,8 +30,10 @@ func random_talent() -> Array:
 	# 获取保留天赋ID
 	var reserved_id = -1
 	var ext_value = propertydata_ins.status.get(PropertyData.Types.EXT, null)
+	print("random_talent - EXT值: ", ext_value)
 	if ext_value != null and ext_value != 0:
 		reserved_id = int(ext_value)
+		print("random_talent - 保留天赋ID: ", reserved_id)
 	
 	# 调用带概率的版本
 	return talent_ins.random_talent(null, addition_values, reserved_id)
@@ -96,6 +98,9 @@ func check_event(event_id: int, ignore_no_random: bool = false) -> bool:
 	return true
 
 func summary_game():
+	# 先计算总评
+	propertydata_ins.status[PropertyData.Types.SUM] = propertydata_ins.calculate_sum()
+	
 	return {
 	"gained_achievement": gainACHV(Achievement.GainAchivementOpportunity.SUMMARY),
 	"judgement": {
@@ -115,8 +120,14 @@ func end_game(ext_id: int = -1):
 	# 检查END成就
 	gainACHV(Achievement.GainAchivementOpportunity.END)
 	# 设置保留天赋
+	print("end_game - 收到的ext_id: ", ext_id)
 	if ext_id != -1:
 		propertydata_ins.status[PropertyData.Types.EXT] = ext_id
+		print("end_game - 设置EXT为: ", ext_id)
+	else:
+		# 如果没有选择保留天赋，清空EXT
+		propertydata_ins.status[PropertyData.Types.EXT] = null
+		print("end_game - 清空EXT")
 	# 保存数据
 	propertydata_ins.save_value()
 	# 重置加载

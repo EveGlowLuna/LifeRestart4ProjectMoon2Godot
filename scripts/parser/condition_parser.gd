@@ -160,8 +160,9 @@ func _get_property_value(prop_name: String, current_status: Dictionary) -> float
 
 
 # 检查存在性（支持所有枚举类型）
+# 对应 JavaScript 中的 checkProp() 函数的 '?' 和 '!' 操作符
 func _check_exists(left: String, right: String, experienced_events: Array, current_status: Dictionary, negate: bool) -> bool:
-	var ids = _parse_ids(right)
+	var condition_data = _parse_condition_data(right)
 	
 	# 通过PropertyData获取枚举值
 	var type_enum = PropertyData._string_enum_types.get(left)
@@ -169,37 +170,87 @@ func _check_exists(left: String, right: String, experienced_events: Array, curre
 		push_error("未知的检查类型: " + left)
 		return false
 	
-	# 从current_status获取对应的值
-	var value = current_status.get(type_enum)
-	if value == null:
+	# 从current_status获取对应的值（propData）
+	var prop_data = current_status.get(type_enum)
+	if prop_data == null:
 		# 如果current_status里没有，可能是数组类型需要特殊处理
 		match left:
 			"EVT", "AEVT", "TLT", "ATLT", "ACHV":
-				value = []
+				prop_data = []
 			_:
-				value = 0
+				prop_data = 0
 	
 	# 根据值的类型决定如何检查
-	if typeof(value) == TYPE_ARRAY:
-		# 数组类型：检查ID是否在数组中
-		for id in ids:
-			var has = id in value  # 直接比较，不转字符串
-			if negate:
-				if has:
-					return false
-			else:
-				if has:
-					return true
-		return negate  # 如果取反，没找到就是true
-	else:
-		# 数字类型：检查值是否等于ID（适用于AGE?[30]这种）
-		var has = value == ids[0]  # 数字类型只比较第一个ID
-		if negate:
-			return not has
+	# 对应 JavaScript: case '?':
+	if typeof(prop_data) == TYPE_ARRAY:
+		# propData 是数组：检查 propData 中的任意元素是否在 conditionData 中
+		# JavaScript: for(const p of propData) if(conditionData.includes(p)) return true;
+		if typeof(condition_data) == TYPE_ARRAY:
+			# conditionData 也是数组（如 [50482]）
+			for p in prop_data:
+				if p in condition_data:
+					return not negate  # 找到了，如果是 '?' 返回 true，如果是 '!' 返回 false
+			return negate  # 没找到，如果是 '?' 返回 false，如果是 '!' 返回 true
 		else:
-			return has
+			# conditionData 是单个值
+			var has = condition_data in prop_data
+			return has if not negate else not has
+	else:
+		# propData 不是数组：检查 conditionData 是否包含 propData
+		# JavaScript: return conditionData.includes(propData);
+		if typeof(condition_data) == TYPE_ARRAY:
+			var has = prop_data in condition_data
+			return has if not negate else not has
+		else:
+			# 两者都是单个值，直接比较
+			var has = prop_data == condition_data
+			return has if not negate else not has
 
-# 解析ID列表，支持单个和多个
+# 解析条件数据，支持单个值和数组
+# 对应 JavaScript: const conditionData = d[0]=='['? JSON.parse(d): Number(d);
+func _parse_condition_data(data_str: String):
+	var trimmed = data_str.strip_edges()
+	
+	# 检查是否是数组格式 [xxx] 或 [xxx,yyy]
+	if trimmed.begins_with("[") and trimmed.ends_with("]"):
+		# 解析为数组
+		var content = trimmed.substr(1, trimmed.length() - 2)  # 去掉 [ 和 ]
+		
+		if content.is_empty():
+			return []
+		
+		if "," in content:
+			# 多个值
+			var parts = content.split(",")
+			var result = []
+			for part in parts:
+				var cleaned = part.strip_edges()
+				if cleaned.is_valid_int():
+					result.append(int(cleaned))
+				elif cleaned.is_valid_float():
+					result.append(float(cleaned))
+				else:
+					result.append(cleaned)
+			return result
+		else:
+			# 单个值，但仍返回数组
+			var cleaned = content.strip_edges()
+			if cleaned.is_valid_int():
+				return [int(cleaned)]
+			elif cleaned.is_valid_float():
+				return [float(cleaned)]
+			else:
+				return [cleaned]
+	else:
+		# 不是数组格式，解析为单个数字
+		if trimmed.is_valid_int():
+			return int(trimmed)
+		elif trimmed.is_valid_float():
+			return float(trimmed)
+		else:
+			return trimmed
+
+# 解析ID列表，支持单个和多个（保留用于向后兼容）
 func _parse_ids(id_str: String) -> Array:
 	var result = []
 	id_str = id_str.replace("[", "").replace("]", "")

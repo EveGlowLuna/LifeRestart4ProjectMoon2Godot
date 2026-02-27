@@ -2,6 +2,7 @@
 
 [ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="1_xdvgc"]
 [ext_resource type="Theme" uid="uid://bt8bcn10cqdq1" path="res://assets/custom_style.tres" id="2_upctu"]
+[ext_resource type="Script" path="res://scripts/menu.gd" id="3_menu"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_upctu"]
 font = ExtResource("1_xdvgc")
@@ -136,6 +137,10 @@ func is_mouse_over() -> bool:
 func _kill_current_tween() -> void:
 	if _current_tween and _current_tween.is_running():
 		_current_tween.kill()
+
+
+func _on_pressed() -> void:
+	TransitionManager.transition_to(\"res://scenes/MainGame/Achievements.tscn\")
 "
 
 [sub_resource type="GDScript" id="GDScript_o0tnf"]
@@ -200,6 +205,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("3_menu")
 
 [node name="BackgroundColorRect" type="ColorRect" parent="." unique_id=934707855]
 layout_mode = 1
@@ -212,15 +218,15 @@ color = Color(0.13333334, 0.15686275, 0.19215687, 1)
 
 [node name="Titles" type="VBoxContainer" parent="." unique_id=1072016102]
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = -1
 anchor_left = 0.5
-anchor_top = 0.5
+anchor_top = 0.35
 anchor_right = 0.5
-anchor_bottom = 0.5
+anchor_bottom = 0.35
 offset_left = -164.0
-offset_top = -187.0
+offset_top = -36.5
 offset_right = 164.0
-offset_bottom = -114.0
+offset_bottom = 36.5
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 5
@@ -243,15 +249,16 @@ vertical_alignment = 1
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
-anchor_top = 0.56200004
+anchor_top = 0.56
 anchor_right = 0.5
-anchor_bottom = 0.56200004
+anchor_bottom = 0.56
 offset_left = -152.0
-offset_top = -70.176025
+offset_top = -70.0
 offset_right = 152.0
-offset_bottom = 69.823975
+offset_bottom = 70.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 10
 script = SubResource("GDScript_b6cxs")
 
 [node name="StartGameBtn" type="Button" parent="Buttons" unique_id=1725059346]
@@ -272,7 +279,9 @@ script = SubResource("GDScript_11y2r")
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("2_upctu")
+disabled = true
 text = "设置"
 script = SubResource("GDScript_o0tnf")
 
 [connection signal="pressed" from="Buttons/StartGameBtn" to="Buttons/StartGameBtn" method="_on_pressed"]
+[connection signal="pressed" from="Buttons/AchievementBtn" to="Buttons/AchievementBtn" method="_on_pressed"]

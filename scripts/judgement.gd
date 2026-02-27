@@ -6,7 +6,7 @@ enum JudgementLevel {
 }
 
 enum JudgementType{
-	HCHR, HINT, HSTR, HMNY, HSPR, HAGE, SUM
+	HCHR, HINT, HSTR, HMNY, HSPR, HAGE, SUM, TMS, CACHV
 }
 
 var HCHR_judgement: Dictionary = {
@@ -282,6 +282,62 @@ var SUM_judgement: Dictionary = {
 	} 
 }
 
+# 重开次数评价（影响紫色天赋概率）
+var TMS_judgement: Dictionary = {
+	0: {
+		JudgementLevel.judge: "抽到紫色概率不变",
+		JudgementLevel.level: 0
+	},
+	10: {
+		JudgementLevel.judge: "抽到紫色概率翻倍",
+		JudgementLevel.level: 1
+	},
+	30: {
+		JudgementLevel.judge: "抽到紫色概率三倍",
+		JudgementLevel.level: 1
+	},
+	50: {
+		JudgementLevel.judge: "抽到紫色概率四倍",
+		JudgementLevel.level: 2
+	},
+	70: {
+		JudgementLevel.judge: "抽到紫色概率五倍",
+		JudgementLevel.level: 2
+	},
+	100: {
+		JudgementLevel.judge: "抽到紫色概率六倍",
+		JudgementLevel.level: 3
+	}
+}
+
+# 成就数量评价（影响橙色天赋概率）
+var CACHV_judgement: Dictionary = {
+	0: {
+		JudgementLevel.judge: "抽到橙色概率不变",
+		JudgementLevel.level: 0
+	},
+	10: {
+		JudgementLevel.judge: "抽到橙色概率翻倍",
+		JudgementLevel.level: 1
+	},
+	30: {
+		JudgementLevel.judge: "抽到橙色概率三倍",
+		JudgementLevel.level: 1
+	},
+	50: {
+		JudgementLevel.judge: "抽到橙色概率四倍",
+		JudgementLevel.level: 2
+	},
+	70: {
+		JudgementLevel.judge: "抽到橙色概率五倍",
+		JudgementLevel.level: 2
+	},
+	100: {
+		JudgementLevel.judge: "抽到橙色概率六倍",
+		JudgementLevel.level: 3
+	}
+}
+
 func judge(type: JudgementType, value: int) -> Dictionary:
 	match type:
 		JudgementType.HCHR:
@@ -333,4 +389,20 @@ func judge(type: JudgementType, value: int) -> Dictionary:
 				if value <= key:
 					return SUM_judgement[key]
 			return SUM_judgement[keys.back()]
+		JudgementType.TMS:
+			var keys = TMS_judgement.keys()
+			keys.sort()
+			for key in keys:
+				if value >= key:
+					continue
+				return TMS_judgement[keys[max(0, keys.find(key) - 1)]]
+			return TMS_judgement[keys.back()]
+		JudgementType.CACHV:
+			var keys = CACHV_judgement.keys()
+			keys.sort()
+			for key in keys:
+				if value >= key:
+					continue
+				return CACHV_judgement[keys[max(0, keys.find(key) - 1)]]
+			return CACHV_judgement[keys.back()]
 	return {}

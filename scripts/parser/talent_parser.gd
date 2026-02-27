@@ -14,19 +14,19 @@ var _talent_rate: Dictionary = {   # 基础概率
 	"total": 1111
 }
 var _additions: Dictionary = {      # 概率加成
-	"TMS": [   # 重开次数加成
-		[10, {1: 1}],
-		[30, {1: 2}],
-		[50, {1: 3}],
-		[70, {1: 4}],
-		[100, {1: 5}],
+	"TMS": [   # 重开次数加成（影响紫色天赋 grade 2）
+		[10, {2: 1}],   # 10次：翻倍（+1倍 = 2倍）
+		[30, {2: 2}],   # 30次：三倍（+2倍 = 3倍）
+		[50, {2: 3}],   # 50次：四倍（+3倍 = 4倍）
+		[70, {2: 4}],   # 70次：五倍（+4倍 = 5倍）
+		[100, {2: 5}],  # 100次：六倍（+5倍 = 6倍）
 	],
-	"CACHV": [ # 成就数加成
-		[10, {1: 1}],
-		[30, {1: 2}],
-		[50, {1: 3}],
-		[70, {1: 4}],
-		[100, {1: 5}],
+	"CACHV": [ # 成就数加成（影响橙色天赋 grade 3）
+		[10, {3: 1}],   # 10个：翻倍（+1倍 = 2倍）
+		[30, {3: 2}],   # 30个：三倍（+2倍 = 3倍）
+		[50, {3: 3}],   # 50个：四倍（+3倍 = 4倍）
+		[70, {3: 4}],   # 70个：五倍（+4倍 = 5倍）
+		[100, {3: 5}],  # 100个：六倍（+5倍 = 6倍）
 	]
 }
 
@@ -67,6 +67,7 @@ func get_talent_info(id: int) -> Dictionary:
 	var talent = _talents[str(id)]
 	var talent_id = talent["id"]
 	var talent_name = talent["name"]
+	var talent_description = talent.get("description", "")
 	var talent_grade = talent["grade"]
 	var talent_effect = talent["effect"] if talent.has("effect") else null
 	var talent_status = talent["status"] if talent.has("status") else null
@@ -100,6 +101,7 @@ func get_talent_info(id: int) -> Dictionary:
 	return {
 		"id": talent_id_parsed,
 		"name": talent_name,
+		"description": talent_description,
 		"grade": talent_grade,
 		"effect": talent_effect,
 		"status": talent_status,

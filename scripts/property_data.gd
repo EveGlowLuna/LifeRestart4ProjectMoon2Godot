@@ -141,6 +141,10 @@ var experienced_events: Array = []
 var excluded_events: Array = []
 var datautil = DataUtil.new()
 
+func _init():
+	# 初始化时加载已保存的数据
+	load_value()
+
 func RESET():
 	status = origin_status.duplicate(true)
 	status[Types.TLT] = []
@@ -161,15 +165,34 @@ func load_value():
 					var json = JSON.new()
 					json.parse(datautil.data[item])
 					var res = json.data
-					status[_string_enum_types[item]] = res
+					# 对于ACHV，确保所有ID都是float类型
+					if item == "ACHV" and res is Array:
+						print("加载ACHV - 原始数据: ", res)
+						var float_achv = []
+						for achv_id in res:
+							float_achv.append(float(achv_id))
+						status[_string_enum_types[item]] = float_achv
+						print("加载ACHV - 转换后: ", float_achv)
+					else:
+						status[_string_enum_types[item]] = res
 				"times":
 					# 带字符串的数字解析+针对变量
 					status[Types.TMS] = int(datautil.data[item])
-				"extendTalent":
-					pass # 属性不需要保留的天赋
 				_:
 					# 通用数字解析
 					status[_string_enum_types[item]] = datautil.data[item]
+		else:
+			# 不在_string_enum_types中的键，特殊处理
+			if item == "extendTalent":
+				# 保留天赋
+				print("加载extendTalent - 原始值: ", datautil.data[item])
+				var ext_val = int(datautil.data[item])
+				print("加载extendTalent - 转换为int: ", ext_val)
+				if ext_val != 0:
+					status[Types.EXT] = ext_val
+					print("加载extendTalent - 设置EXT为: ", ext_val)
+				else:
+					print("加载extendTalent - ext_val为0，不设置EXT")
 	# 总评是局内的评价，不修改
 	# 总数
 	status[Types.CTLT] = len(status[Types.ATLT])
@@ -245,22 +268,30 @@ func update_extremes_from_status() -> void:
 	status[Types.RACHV] = float(status[Types.CACHV]) / float(status[Types.TACHV]) if status[Types.TACHV] > 0 else 0.0
 
 func save_value(extendTalent: int = 0):
+	print("save_value - 开始保存，EXT值: ", status[Types.EXT])
+	print("save_value - datautil.data的键: ", datautil.data.keys())
+	
+	# 只保存需要持久化的数据：成就、事件、天赋、重开次数
 	for item in datautil.data:
-		if _string_enum_types.has(item):
-			match item:
-				"AEVT", "ATLT", "ACHV":
-					# 单独的字符串数据解析
-					var res = JSON.stringify(status[_string_enum_types[item]])
-					datautil.data[item] = res
-				"times":
-					# 带字符串的数字解析+针对变量
-					datautil.data[item] = str(status[Types.TMS])
-				"extendTalent":
-					datautil.data[item] = str(extendTalent)
-				_:
-					# 通用数字解析
-					datautil.data[item] = status[_string_enum_types[item]]
+		if item == "AEVT" or item == "ATLT" or item == "ACHV":
+			# 保存收集数据（数组）
+			var res = JSON.stringify(status[_string_enum_types[item]])
+			datautil.data[item] = res
+		elif item == "times":
+			# 保存重开次数
+			datautil.data[item] = str(status[Types.TMS])
+		elif item == "extendTalent":
+			# 保存保留天赋
+			if status[Types.EXT] != null:
+				datautil.data[item] = str(status[Types.EXT])
+				print("save_value - 保存EXT: ", status[Types.EXT])
+			else:
+				datautil.data[item] = "0"
+				print("save_value - EXT为null，保存0")
+		# 其他键（HAGE, HCHR等极值）不保存，保持原值或设为0
+	
 	datautil.update_data()
+	print("save_value - 保存完成")
 
 func apply_effects(effects: Dictionary):
 	for item in effects:

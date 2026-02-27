@@ -1,0 +1,324 @@
+[gd_scene format=3 uid="uid://b3ickrse0yhpy"]
+
+[ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="1_55nbd"]
+[ext_resource type="Theme" uid="uid://bt8bcn10cqdq1" path="res://assets/custom_style.tres" id="2_otyy5"]
+[ext_resource type="Script" uid="uid://wnlup63gxufd" path="res://scripts/button/button_anims.gd" id="3_qhcjn"]
+
+[sub_resource type="GDScript" id="GDScript_otyy5"]
+script/source = "extends Node2D
+
+var achievement_panel = preload(\"res://scenes/achievement_panel.tscn\")
+var achv_themes = [
+	load(\"res://assets/achvlevels/0.tres\"),
+	load(\"res://assets/achvlevels/1.tres\"),
+	load(\"res://assets/achvlevels/2.tres\"),
+	load(\"res://assets/achvlevels/3.tres\"),
+	load(\"res://assets/achvlevels/4.tres\")
+]
+
+func _ready() -> void:
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	call_deferred(\"_update_ui_scale\")
+	_populate_achievements()
+	_update_progress()
+
+func _on_viewport_size_changed() -> void:
+	_update_ui_scale()
+
+func _update_ui_scale() -> void:
+	var viewport_size = get_viewport_rect().size
+	var viewport_height = viewport_size.y
+	
+	# 标题字体
+	var title_font_size = max(25, int(viewport_height * 0.045))
+	var title_label = $CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer2/TitleLabel
+	var title_settings = LabelSettings.new()
+	title_settings.font = title_label.label_settings.font
+	title_settings.font_size = title_font_size
+	title_label.label_settings = title_settings
+	
+	# 按钮字体和大小
+	var button_font_size = max(14, int(viewport_height * 0.022))
+	var button_height = max(30, int(viewport_height * 0.045))
+	var button_width = max(75, int(viewport_size.x * 0.08))
+	
+	for btn_name in [\"GlobalBtn\", \"BackBtn\"]:
+		var btn = $CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer2/PlaceHolder3.get_node(btn_name)
+		btn.custom_minimum_size = Vector2(button_width, button_height)
+		btn.pivot_offset = Vector2(button_width, button_height) / 2.0
+		btn.begin_bulk_theme_override()
+		btn.add_theme_font_size_override(\"font_size\", button_font_size)
+		btn.end_bulk_theme_override()
+	
+	# 进度标签字体
+	var label_font_size = max(14, int(viewport_height * 0.022))
+	var progress_label = $CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer/Label
+	var label_settings = LabelSettings.new()
+	label_settings.font = progress_label.label_settings.font
+	label_settings.font_size = label_font_size
+	progress_label.label_settings = label_settings
+	
+	# 等级标签字体
+	var level_font_size = max(16, int(viewport_height * 0.025))
+	for i in range(5):
+		var level_label = $CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS.get_node(\"Label\" + (\"\" if i == 0 else str(i + 1)))
+		var level_settings = LabelSettings.new()
+		level_settings.font = level_label.label_settings.font if level_label.label_settings else null
+		level_settings.font_size = level_font_size
+		level_label.label_settings = level_settings
+
+func _populate_achievements() -> void:
+	var gained_achvs = EventManager.propertydata_ins.status[PropertyData.Types.ACHV]
+	print(\"成就页面 - 已获得的成就: \", gained_achvs)
+	print(\"成就数量: \", gained_achvs.size())
+	if gained_achvs.size() > 0:
+		print(\"第一个成就类型: \", typeof(gained_achvs[0]))
+	
+	# 按等级分组成就
+	for grade in range(5):
+		var container = $CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS.get_node(\"SC\" + str(grade) + \"/VBoxContainer\")
+		
+		# 收集该等级的所有成就，分为已获得和未获得
+		var gained_list = []
+		var not_gained_list = []
+		
+		for achv_id_str in EventManager.achievement_ins._achievements:
+			var achv = EventManager.achievement_ins._achievements[achv_id_str]
+			if int(achv[\"grade\"]) == grade:
+				var achv_id = int(achv_id_str)
+				# 适配float类型的成就ID：检查int和float两种形式
+				var is_gained = achv_id in gained_achvs or float(achv_id) in gained_achvs
+				if is_gained:
+					gained_list.append({\"id\": achv_id_str, \"data\": achv})
+				else:
+					not_gained_list.append({\"id\": achv_id_str, \"data\": achv})
+		
+		# 先添加已获得的成就
+		for item in gained_list:
+			var panel = achievement_panel.instantiate()
+			panel.theme = achv_themes[grade]
+			
+			var name_label = panel.get_node(\"MarginContainer/VBoxContainer/name\")
+			name_label.text = item[\"data\"][\"name\"]
+			
+			var gained_label = panel.get_node(\"MarginContainer/VBoxContainer/gained\")
+			gained_label.text = \"已获得\"
+			
+			container.add_child(panel)
+		
+		# 再添加未获得的成就
+		for item in not_gained_list:
+			var panel = achievement_panel.instantiate()
+			panel.theme = achv_themes[grade]
+			
+			var name_label = panel.get_node(\"MarginContainer/VBoxContainer/name\")
+			name_label.text = item[\"data\"][\"name\"]
+			
+			var gained_label = panel.get_node(\"MarginContainer/VBoxContainer/gained\")
+			gained_label.text = \"未获得\"
+			
+			container.add_child(panel)
+
+func _update_progress() -> void:
+	var progress_bar = $CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer/RACHV
+	var rachv = EventManager.propertydata_ins.status.get(PropertyData.Types.RACHV, 0.0)
+	progress_bar.value = rachv * 100.0
+
+
+func _on_back_btn_pressed() -> void:
+	TransitionManager.transition_to(\"res://scenes/Menu.tscn\")
+
+
+func _on_global_btn_pressed() -> void:
+	NotificationManager.show_notification(\"排行系统施工中……\")
+"
+
+[sub_resource type="LabelSettings" id="LabelSettings_d4ey8"]
+font = ExtResource("1_55nbd")
+font_size = 35
+
+[sub_resource type="LabelSettings" id="LabelSettings_55nbd"]
+font = ExtResource("1_55nbd")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_otyy5"]
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1.92523e-06, 0.91175795, 0.9224006, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_55nbd"]
+bg_color = Color(1, 0.22352941, 0, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.94440734, 0.4908557, 1, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="Theme" id="Theme_qhcjn"]
+ProgressBar/styles/background = SubResource("StyleBoxFlat_otyy5")
+ProgressBar/styles/fill = SubResource("StyleBoxFlat_55nbd")
+
+[node name="Achievements" type="Node2D" unique_id=886167202]
+script = SubResource("GDScript_otyy5")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=57981160]
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer" unique_id=697407303]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.13333334, 0.15686275, 0.19215687, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/ColorRect" unique_id=477877529]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 15
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 15
+theme_override_constants/margin_bottom = 15
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/ColorRect/MarginContainer" unique_id=1375452939]
+layout_mode = 2
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer" unique_id=34326748]
+layout_mode = 2
+
+[node name="PlaceHolder" type="Control" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1153099476]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1344563342]
+layout_mode = 2
+text = "成就"
+label_settings = SubResource("LabelSettings_d4ey8")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlaceHolder3" type="HBoxContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=46703069]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 2
+
+[node name="GlobalBtn" type="Button" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer2/PlaceHolder3" unique_id=854798463]
+custom_minimum_size = Vector2(95, 35)
+layout_mode = 2
+theme = ExtResource("2_otyy5")
+text = "排行"
+script = ExtResource("3_qhcjn")
+
+[node name="PlaceHolder" type="Control" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer2/PlaceHolder3" unique_id=898304723]
+custom_minimum_size = Vector2(5, 0)
+layout_mode = 2
+
+[node name="BackBtn" type="Button" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer2/PlaceHolder3" unique_id=647374908]
+custom_minimum_size = Vector2(95, 35)
+layout_mode = 2
+theme = ExtResource("2_otyy5")
+text = "返回"
+script = ExtResource("3_qhcjn")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer" unique_id=1619347469]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer" unique_id=650018875]
+layout_mode = 2
+text = "总进度："
+label_settings = SubResource("LabelSettings_55nbd")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RACHV" type="ProgressBar" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1024784356]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_qhcjn")
+
+[node name="PlaceHolder" type="Control" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer" unique_id=1152841975]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer" unique_id=1739083608]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ACHVS" type="VBoxContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer" unique_id=957314742]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Label" type="Label" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=1350453648]
+layout_mode = 2
+text = "等级1"
+
+[node name="SC0" type="ScrollContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=330207068]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="HBoxContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS/SC0" unique_id=1968500109]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Label2" type="Label" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=539723892]
+layout_mode = 2
+text = "等级2"
+
+[node name="SC1" type="ScrollContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=1001524160]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="HBoxContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS/SC1" unique_id=1182960355]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Label3" type="Label" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=227039145]
+layout_mode = 2
+text = "等级3"
+
+[node name="SC2" type="ScrollContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=326840639]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="HBoxContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS/SC2" unique_id=1980645564]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Label4" type="Label" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=1749581741]
+layout_mode = 2
+text = "等级4"
+
+[node name="SC3" type="ScrollContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=1162667837]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="HBoxContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS/SC3" unique_id=476013984]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Label5" type="Label" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=1723640997]
+layout_mode = 2
+text = "等级5"
+
+[node name="SC4" type="ScrollContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=467065020]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="HBoxContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS/SC4" unique_id=916852041]
+layout_mode = 2
+size_flags_vertical = 3
+
+[connection signal="pressed" from="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer2/PlaceHolder3/GlobalBtn" to="." method="_on_global_btn_pressed"]
+[connection signal="pressed" from="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer2/PlaceHolder3/BackBtn" to="." method="_on_back_btn_pressed"]

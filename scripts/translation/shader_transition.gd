@@ -131,9 +131,9 @@ func animate_transition() -> void:
 func set_progress(value: float):
 	if shader_material:
 		shader_material.set_shader_parameter("progress", value)
-		# 只在关键帧打印
-		if int(value * 10) > int((value - 0.1) * 10):
-			print("动画进度: ", int(value * 100), "%")
+		# 注释掉进度输出
+		# if int(value * 10) > int((value - 0.1) * 10):
+		# 	print("动画进度: ", int(value * 100), "%")
 
 func finish_transition():
 	print("完成转场，准备切换场景")
