@@ -132,6 +132,12 @@ func _populate_talent_options():
 	var option_button = $CanvasLayer/ColorRect/HBoxContainer/OptionButton
 	option_button.clear()
 	
+	# 设置 popup 菜单的字体
+	var popup = option_button.get_popup()
+	var chinese_font = load(\"res://assets/ChineseFont.ttf\")
+	popup.add_theme_font_override(\"font\", chinese_font)
+	popup.add_theme_font_size_override(\"font_size\", 16)
+	
 	# 获取玩家本局选择的天赋
 	var selected_talents = EventManager.propertydata_ins.status[PropertyData.Types.TLT]
 	
@@ -252,6 +258,7 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_fonts/font = ExtResource("1_3ibb3")
+theme_override_font_sizes/font_size = 16
 
 [node name="Button" type="Button" parent="CanvasLayer" unique_id=718612088]
 anchors_preset = -1
