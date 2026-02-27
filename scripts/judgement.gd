@@ -249,15 +249,15 @@ var HAGE_judgement: Dictionary = {
 
 var SUM_judgement: Dictionary = { 
 	0: { 
-		JudgementLevel.judge: "地狱", 
+		JudgementLevel.judge: "拉完了", 
 		JudgementLevel.level: 0 
 	}, 
 	41: { 
-		JudgementLevel.judge: "折磨", 
+		JudgementLevel.judge: "NPC", 
 		JudgementLevel.level: 0 
 	}, 
 	50: { 
-		JudgementLevel.judge: "不佳", 
+		JudgementLevel.judge: "NPC", 
 		JudgementLevel.level: 0 
 	}, 
 	60: { 
@@ -265,19 +265,19 @@ var SUM_judgement: Dictionary = {
 		JudgementLevel.level: 0 
 	}, 
 	80: { 
-		JudgementLevel.judge: "优秀", 
+		JudgementLevel.judge: "人上人", 
 		JudgementLevel.level: 1 
 	}, 
 	100: { 
-		JudgementLevel.judge: "罕见", 
+		JudgementLevel.judge: "顶级", 
 		JudgementLevel.level: 2 
 	}, 
 	110: { 
-		JudgementLevel.judge: "逆天", 
+		JudgementLevel.judge: "顶级", 
 		JudgementLevel.level: 3 
 	}, 
 	120: { 
-		JudgementLevel.judge: "传说", 
+		JudgementLevel.judge: "夯", 
 		JudgementLevel.level: 3 
 	} 
 }
