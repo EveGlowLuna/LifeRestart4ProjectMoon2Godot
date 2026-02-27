@@ -1,19 +1,18 @@
 name: Manual Export to Web
 
 on:
-  workflow_dispatch: # 允许手动在 GitHub 界面触发
+  workflow_dispatch:
     inputs:
-      godot_version_input:
-        description: 'Godot Version (e.g., 4.6.stable)'
-        required: true
-        default: '4.6.stable'
+      note:
+        description: 'Deploying Godot 4.6.1-stable to webgame branch.'
+        required: false
         type: string
 
 jobs:
   export-game:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # 必须拥有写入仓库的权限以推送到 webgame 分支
+      contents: write # 允许推送到 webgame 分支
 
     steps:
       # 1. 检出代码
@@ -22,24 +21,39 @@ jobs:
 
       # 2. 导出 Godot 项目
       - name: Export Game to Web
-        uses: firebelley/godot-export@v5.0.0
+        uses: firebelley/godot-export@v7.0.0
         with:
-          # 使用手动输入的版本，或者硬编码为 4.6.stable
-          godot_version: ${{ inputs.godot_version_input }}
-          preset_name: Web # 确保你的 export_presets.cfg 里有个叫 "Web" 的预设
-          output_path: ./.pub/web # 你指定的发布文件夹
+          # 【关键】使用你提供的 GitHub Release 链接 (Linux Server 版)
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.6.1-stable/Godot_v4.6.1-stable_linux.x86_64.zip
+          
+          # 【关键】使用你提供的 GitHub Release 链接 (导出模板)
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.6.1-stable/Godot_v4.6.1-stable_export_templates.tpz
+          
+          # 项目根目录路径 (假设 project.godot 在仓库根目录)
+          relative_project_path: ./
+          
+          # 【关键】设为 true，这样它会读取你 export_presets.cfg 中设置的路径 (.pub/web)
+          use_preset_export_path: true
+          
+          # 不打包成 zip，直接输出文件以便部署
+          archive_output: false
+          
+          # 只导出名为 "Web" 的预设 (区分大小写，需与 cfg 文件中一致)
+          presets_to_export: Web
 
       # 3. 部署到 webgame 分支
       - name: Deploy to webgame branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./.pub/web # 必须与上面的 output_path 一致
+          # 这里必须与你 Godot 导出预设中设置的路径一致
+          # 如果你在 Godot 里设置的是 .pub/web/index.html，这里就填 ./.pub/web
+          publish_dir: ./.pub/web
           destination_dir: .       # 发布到分支根目录
           publish_branch: webgame  # 目标分支
-          force_orphan: true       # 关键：清空旧文件，只保留新构建，保持分支轻量
+          force_orphan: true       # 保持分支干净，只保留最新构建
           
           user_name: 'EveGlowLuna' 
           user_email: 'yy15502497613@outlook.com'
           
-          commit_message: 'Deploy game build triggered by ${{ github.actor }}'
+          commit_message: 'Deploy Godot 4.6.1 build triggered by ${{ github.actor }}'
