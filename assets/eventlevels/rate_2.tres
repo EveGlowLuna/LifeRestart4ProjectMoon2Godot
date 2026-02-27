@@ -1,5 +1,7 @@
 [gd_resource type="Theme" format=3 uid="uid://2k575mfjtowl"]
 
+[ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="1_hvp0n"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gada6"]
 bg_color = Color(0.4860654, 0.097398795, 0.9999998, 1)
 corner_radius_top_left = 5
@@ -8,4 +10,5 @@ corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [resource]
+default_font = ExtResource("1_hvp0n")
 Label/styles/normal = SubResource("StyleBoxFlat_gada6")

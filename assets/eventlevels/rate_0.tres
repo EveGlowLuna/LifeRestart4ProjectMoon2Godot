@@ -1,5 +1,7 @@
 [gd_resource type="Theme" format=3 uid="uid://bbq35equ60ywl"]
 
+[ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="1_d4lva"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gada6"]
 corner_radius_top_left = 5
 corner_radius_top_right = 5
@@ -7,4 +9,5 @@ corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [resource]
+default_font = ExtResource("1_d4lva")
 Label/styles/normal = SubResource("StyleBoxFlat_gada6")

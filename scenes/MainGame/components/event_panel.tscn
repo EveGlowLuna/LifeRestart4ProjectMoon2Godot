@@ -1,8 +1,10 @@
 [gd_scene format=3 uid="uid://bfxhe3fryq6po"]
 
 [ext_resource type="Theme" uid="uid://bbq35equ60ywl" path="res://assets/eventlevels/rate_0.tres" id="1_378ma"]
+[ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="2_font"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_h25tl"]
+font = ExtResource("2_font")
 
 [node name="Panel" type="Panel" unique_id=813486502]
 custom_minimum_size = Vector2(0, 50)

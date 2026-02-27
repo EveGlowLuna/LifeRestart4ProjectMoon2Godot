@@ -164,8 +164,12 @@ corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [sub_resource type="Theme" id="Theme_qhcjn"]
+default_font = ExtResource("1_55nbd")
 ProgressBar/styles/background = SubResource("StyleBoxFlat_otyy5")
 ProgressBar/styles/fill = SubResource("StyleBoxFlat_55nbd")
+
+[sub_resource type="LabelSettings" id="LabelSettings_otyy5"]
+font = ExtResource("1_55nbd")
 
 [node name="Achievements" type="Node2D" unique_id=886167202]
 script = SubResource("GDScript_otyy5")
@@ -263,6 +267,7 @@ size_flags_vertical = 3
 [node name="Label" type="Label" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=1350453648]
 layout_mode = 2
 text = "等级1"
+label_settings = SubResource("LabelSettings_otyy5")
 
 [node name="SC0" type="ScrollContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=330207068]
 layout_mode = 2
@@ -275,6 +280,7 @@ size_flags_vertical = 3
 [node name="Label2" type="Label" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=539723892]
 layout_mode = 2
 text = "等级2"
+label_settings = SubResource("LabelSettings_otyy5")
 
 [node name="SC1" type="ScrollContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=1001524160]
 layout_mode = 2
@@ -287,6 +293,7 @@ size_flags_vertical = 3
 [node name="Label3" type="Label" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=227039145]
 layout_mode = 2
 text = "等级3"
+label_settings = SubResource("LabelSettings_otyy5")
 
 [node name="SC2" type="ScrollContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=326840639]
 layout_mode = 2
@@ -299,6 +306,7 @@ size_flags_vertical = 3
 [node name="Label4" type="Label" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=1749581741]
 layout_mode = 2
 text = "等级4"
+label_settings = SubResource("LabelSettings_otyy5")
 
 [node name="SC3" type="ScrollContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=1162667837]
 layout_mode = 2
@@ -311,6 +319,7 @@ size_flags_vertical = 3
 [node name="Label5" type="Label" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=1723640997]
 layout_mode = 2
 text = "等级5"
+label_settings = SubResource("LabelSettings_otyy5")
 
 [node name="SC4" type="ScrollContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS" unique_id=467065020]
 layout_mode = 2

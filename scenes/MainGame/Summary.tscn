@@ -178,6 +178,9 @@ func _on_button_pressed() -> void:
 font = ExtResource("1_3ibb3")
 font_size = 35
 
+[sub_resource type="LabelSettings" id="LabelSettings_3lieh"]
+font = ExtResource("1_3ibb3")
+
 [node name="Summary" type="Node2D" unique_id=595930007]
 script = SubResource("GDScript_3ibb3")
 
@@ -239,6 +242,7 @@ grow_vertical = 2
 [node name="Label" type="Label" parent="CanvasLayer/ColorRect/HBoxContainer" unique_id=1067116827]
 layout_mode = 2
 text = "选择一个天赋，下一轮你还可以遇到："
+label_settings = SubResource("LabelSettings_3lieh")
 
 [node name="PlaceHolder" type="Control" parent="CanvasLayer/ColorRect/HBoxContainer" unique_id=758653235]
 custom_minimum_size = Vector2(20, 0)

@@ -2,13 +2,14 @@
 
 [ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="1_xdvgc"]
 [ext_resource type="Theme" uid="uid://bt8bcn10cqdq1" path="res://assets/custom_style.tres" id="2_upctu"]
-[ext_resource type="Script" path="res://scripts/menu.gd" id="3_menu"]
+[ext_resource type="Script" uid="uid://csymv7fqdtbg6" path="res://scripts/menu.gd" id="3_menu"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_upctu"]
 font = ExtResource("1_xdvgc")
 font_size = 35
 
 [sub_resource type="LabelSettings" id="LabelSettings_xdvgc"]
+font = ExtResource("1_xdvgc")
 font_size = 18
 
 [sub_resource type="GDScript" id="GDScript_b6cxs"]
