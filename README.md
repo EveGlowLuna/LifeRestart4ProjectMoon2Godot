@@ -1,9 +1,9 @@
 # LifeRetart4ProjectMoon2Godot
 
 基于GodotEngine的“人生重开模拟器 月计版”
-
+<!-- 
 > [!CAUTION]
-> 项目尚未完工，前面的区域，以后再来探索吧
+> 项目尚未完工，前面的区域，以后再来探索吧 -->
 
 此版本实现了对原项目[Clouds-Heath/PM-life-restart](https://github.com/Clouds-Heath/PM-life-restart)的重构，使其灵活性更高，初学者也能快速参与开发。
 
