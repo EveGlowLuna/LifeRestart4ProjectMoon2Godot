@@ -1,0 +1,45 @@
+name: Manual Export to Web
+
+on:
+  workflow_dispatch: # 允许手动在 GitHub 界面触发
+    inputs:
+      godot_version_input:
+        description: 'Godot Version (e.g., 4.6.stable)'
+        required: true
+        default: '4.6.stable'
+        type: string
+
+jobs:
+  export-game:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 必须拥有写入仓库的权限以推送到 webgame 分支
+
+    steps:
+      # 1. 检出代码
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. 导出 Godot 项目
+      - name: Export Game to Web
+        uses: firebelley/godot-export@v5.0.0
+        with:
+          # 使用手动输入的版本，或者硬编码为 4.6.stable
+          godot_version: ${{ inputs.godot_version_input }}
+          preset_name: Web # 确保你的 export_presets.cfg 里有个叫 "Web" 的预设
+          output_path: ./.pub/web # 你指定的发布文件夹
+
+      # 3. 部署到 webgame 分支
+      - name: Deploy to webgame branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./.pub/web # 必须与上面的 output_path 一致
+          destination_dir: .       # 发布到分支根目录
+          publish_branch: webgame  # 目标分支
+          force_orphan: true       # 关键：清空旧文件，只保留新构建，保持分支轻量
+          
+          user_name: 'EveGlowLuna' 
+          user_email: 'yy15502497613@outlook.com'
+          
+          commit_message: 'Deploy game build triggered by ${{ github.actor }}'
