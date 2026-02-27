@@ -10,7 +10,7 @@
 ## 怎么玩？
 
 - https://life-restart4project-moon.netlify.app/
-- 但可能加载会很慢（建议下载游戏；之后会尝试优化）
+- 但可能加载会很慢（之后会尝试优化）
 
 - 同时支持Android/Windows、macOS/Linux四端。在 **Release 页面**下载。
 
