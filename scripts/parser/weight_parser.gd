@@ -1,14 +1,14 @@
 class_name WeightParser extends Node
 
 func process(data: Array) -> Array:
-	"""将不统一的id格式转化为统一格式(int->str)"""
+	"""将不统一的id格式转化为统一格式(type_all->str)"""
 	var parsed_data = []
 	for item in data:
-		if typeof(item) == TYPE_INT:
-			parsed_data.append(str(item))
-		else:
-			parsed_data.append(item)
-	
+#		if typeof(item) == TYPE_INT:
+#			parsed_data.append(str(item))
+#		else:
+#			parsed_data.append(item)
+		parsed_data.append(str(item))
 	return parsed_data
 
 # 解析单个事件字符串，返回 {id: "1001", weight: 0.2} 格式
@@ -34,7 +34,7 @@ func random_select(events: Array) -> String:
 	var total_weight: float = 0.0
 	
 	for event_str in events:
-		var parsed = parse_event(event_str)
+		var parsed = parse_event(str(event_str))
 		parsed_events.append(parsed)
 		total_weight += parsed.weight
 	

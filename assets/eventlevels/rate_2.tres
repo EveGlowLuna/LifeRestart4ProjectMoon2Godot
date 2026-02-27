@@ -1,0 +1,11 @@
+[gd_resource type="Theme" format=3 uid="uid://2k575mfjtowl"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gada6"]
+bg_color = Color(0.4860654, 0.097398795, 0.9999998, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[resource]
+Label/styles/normal = SubResource("StyleBoxFlat_gada6")

@@ -1,0 +1,413 @@
+[gd_scene format=3 uid="uid://dnxb2rm6j8k1p"]
+
+[ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="1_nvwg0"]
+[ext_resource type="Theme" uid="uid://bt8bcn10cqdq1" path="res://assets/custom_style.tres" id="2_gada6"]
+[ext_resource type="Script" uid="uid://wnlup63gxufd" path="res://scripts/button/button_anims.gd" id="3_fyn3n"]
+
+[sub_resource type="GDScript" id="GDScript_fyn3n"]
+script/source = "extends Node2D
+
+var eventshower = preload(\"res://scenes/MainGame/components/event_panel.tscn\")
+
+var is_dead = false
+
+func _ready() -> void:
+	
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	# 初始化时更新一次UI大小
+	call_deferred(\"_update_ui_scale\")
+	# 初始化
+	print(\"现在有的天赋：\" + str(EventManager.propertydata_ins.status[PropertyData._string_enum_types[\"TLT\"]]))
+	var game_init_data = EventManager.start_game(EventManager.propertydata_ins.status[PropertyData._string_enum_types[\"TLT\"]])
+	replace_talents_message(game_init_data[\"replaced_talents\"])
+	gained_achievement_message(game_init_data[\"gained_achievement\"])
+		
+
+func replace_talents_message(talents: Array):
+	var msg: String = \"\"
+	var tlt_names = []
+	if talents.size() > 0:
+		for item in talents:
+			tlt_names.append(EventManager.talent_ins._talents[str(talents[item])][\"name\"])
+		if tlt_names.size() > 0:
+			msg = \"替换了%s个天赋，分别是\" % str(tlt_names.size())
+			for item in tlt_names.size():
+				msg += \"%s\" % tlt_names[item]
+				if tlt_names[-1] != tlt_names[item]:
+					msg += \"、\"
+	if msg != \"\":
+		NotificationManager.show_notification(msg)
+
+func gained_achievement_message(achievements: Array):
+	print(achievements)
+	var msg: String = \"\"
+	var achv_names = []
+	if achievements.size() > 0:
+		for item in achievements.size():
+			print(achievements[item])
+			achv_names.append(EventManager.achievement_ins._achievements[str(int(achievements[item]))][\"name\"])
+		if achv_names.size() > 0:
+			msg = \"获得成就：\"
+		for item in achv_names.size():
+			msg += \"%s\" % achv_names[item]
+			if achv_names[-1] != achv_names[item]:
+				msg += \"、\"
+	if msg != \"\":
+		NotificationManager.show_notification(msg)
+
+func _on_viewport_size_changed() -> void:
+	_update_ui_scale()
+
+#region 缩放
+func _update_ui_scale() -> void:
+	var viewport_size = get_viewport_rect().size
+	var viewport_height = viewport_size.y
+	
+	# 计算字体大小
+	var status_font_size = max(14, int(viewport_height * 0.025))
+	var button_font_size = max(14, int(viewport_height * 0.022))
+	var event_font_size = max(15, int(viewport_height * 0.024))
+	
+	# 更新状态栏字体
+	for status in [\"AGE\", \"CHR\", \"INT\", \"STR\", \"MNY\"]:
+		var vbox = $CanvasLayer/VBoxContainer/StatusHBox.get_node(status)
+		for child in vbox.get_children():
+			if child is Label:
+				var label_settings = LabelSettings.new()
+				label_settings.font = child.label_settings.font
+				label_settings.font_size = status_font_size
+				child.label_settings = label_settings
+	
+	# 更新按钮字体和大小
+	var button_height = max(30, int(viewport_height * 0.045))
+	var button_width = max(75, int(viewport_size.x * 0.08))
+	
+	$CanvasLayer/VBoxContainer/StatusHBox/AutoBtn.custom_minimum_size = Vector2(button_width, button_height)
+	$CanvasLayer/VBoxContainer/StatusHBox/AutoBtn.pivot_offset = Vector2(button_width, button_height) / 2.0
+	$CanvasLayer/VBoxContainer/StatusHBox/AutoBtn.begin_bulk_theme_override()
+	$CanvasLayer/VBoxContainer/StatusHBox/AutoBtn.add_theme_font_size_override(\"font_size\", button_font_size)
+	$CanvasLayer/VBoxContainer/StatusHBox/AutoBtn.end_bulk_theme_override()
+	
+	$CanvasLayer/VBoxContainer/Summarize.custom_minimum_size = Vector2(button_width * 1.5, button_height)
+	$CanvasLayer/VBoxContainer/Summarize.pivot_offset = Vector2(button_width * 1.5, button_height) / 2.0
+	$CanvasLayer/VBoxContainer/Summarize.begin_bulk_theme_override()
+	$CanvasLayer/VBoxContainer/Summarize.add_theme_font_size_override(\"font_size\", button_font_size)
+	$CanvasLayer/VBoxContainer/Summarize.end_bulk_theme_override()
+#endregion
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		# 获取鼠标位置
+		var mouse_pos = get_viewport().get_mouse_position()
+		var margin_container = $CanvasLayer/VBoxContainer/MarginContainer
+		
+		# 检查鼠标是否在 MarginContainer 的区域内
+		var rect = margin_container.get_global_rect()
+		if rect.has_point(mouse_pos):
+			next_year()
+			# 标记事件已处理
+			get_viewport().set_input_as_handled()
+	if event is InputEventKey and event.pressed and event.keycode == KEY_SPACE:
+		next_year()
+		get_viewport().set_input_as_handled()
+
+
+var privous_event: int = -1
+func next_year():
+	if is_dead:
+		return
+	EventManager.next_year()
+	var result = EventManager.execute_next(privous_event)
+	print(\"Age: \", EventManager.propertydata_ins.status[PropertyData.Types.AGE], 
+		  \" | Previous: \", privous_event, 
+		  \" | Current: \", result[\"event\"],
+		  \" | Final: \", result[\"final_event\"],
+		  \" | LIF: \", EventManager.propertydata_ins.status[PropertyData.Types.LIF],
+		  \" | is_dead: \", result[\"dead\"])
+	
+	# 使用最终事件ID，避免重复执行branch事件
+	privous_event = result[\"final_event\"]
+	
+	# 递归显示所有事件（包括嵌套的branch）
+	_display_event_recursive(result[\"description\"])
+	
+	is_dead = result[\"dead\"]
+	gained_achievement_message(result[\"gained_achivements\"])
+	_update_ui()
+
+# 递归显示事件描述（处理嵌套的branch）
+func _display_event_recursive(event_data: Dictionary, is_first: bool = true):
+	# 检查是否有branch
+	var has_branch = \"branch\" in event_data and event_data[\"branch\"] != null
+	
+	# 如果有branch，只显示postEvent（如果有），然后递归处理branch
+	if has_branch:
+		# 显示当前事件的postEvent（如果有）
+		if \"postEvent\" in event_data and event_data[\"postEvent\"] != null:
+			var postmsg = event_data[\"postEvent\"].replace(\"\\n\", \"  \")
+			_add_event_panel(postmsg, event_data.get(\"grade\", 0))
+		# 递归处理branch
+		_display_event_recursive(event_data[\"branch\"], is_first)
+	else:
+		# 没有branch，正常显示description和postEvent
+		if \"description\" in event_data and event_data[\"description\"] != \"\":
+			var msg = event_data[\"description\"]
+			if is_first:
+				msg = str(EventManager.propertydata_ins.status[PropertyData.Types.AGE]) + \"岁: \" + msg
+			_add_event_panel(msg, event_data.get(\"grade\", 0))
+		
+		# 显示postEvent
+		if \"postEvent\" in event_data and event_data[\"postEvent\"] != null:
+			var postmsg = event_data[\"postEvent\"].replace(\"\\n\", \"  \")
+			_add_event_panel(postmsg, event_data.get(\"grade\", 0))
+
+func can_scroll() -> bool:
+	return $CanvasLayer/VBoxContainer/MarginContainer/ScrollContainer.get_v_scroll_bar().max_value > 0
+
+func scroll(duration: float = 0.3):
+	var scroll_container = $CanvasLayer/VBoxContainer/MarginContainer/ScrollContainer
+	var v_scroll = scroll_container.get_v_scroll_bar()
+	var target_scroll = v_scroll.max_value
+	var tween = create_tween()
+	tween.tween_property(scroll_container, \"scroll_vertical\", target_scroll, duration)
+
+func _update_ui():
+	$CanvasLayer/VBoxContainer/StatusHBox/AGE/Label.text = str(EventManager.propertydata_ins.status[PropertyData.Types.AGE])
+	$CanvasLayer/VBoxContainer/StatusHBox/CHR/Label.text = str(EventManager.propertydata_ins.status[PropertyData.Types.CHR])
+	$CanvasLayer/VBoxContainer/StatusHBox/INT/Label.text = str(EventManager.propertydata_ins.status[PropertyData.Types.INT])
+	$CanvasLayer/VBoxContainer/StatusHBox/STR/Label.text = str(EventManager.propertydata_ins.status[PropertyData.Types.STR])
+	$CanvasLayer/VBoxContainer/StatusHBox/MNY/Label.text = str(EventManager.propertydata_ins.status[PropertyData.Types.MNY])
+	if is_dead:
+		$CanvasLayer/VBoxContainer/HSeparator3.visible = true
+		$CanvasLayer/VBoxContainer/Summarize.visible = true
+
+var grade0 = load(\"res://assets/eventlevels/rate_0.tres\")
+var grade1 = load(\"res://assets/eventlevels/rate_1.tres\")
+var grade2 = load(\"res://assets/eventlevels/rate_2.tres\")
+var grade3 = load(\"res://assets/eventlevels/rate_3.tres\")
+var grade4 = load(\"res://assets/eventlevels/rate_4.tres\")
+func _add_event_panel(event: String = \"默认文本\", grade: int = 0):
+	var panel_instance = eventshower.instantiate()
+	var label = panel_instance.get_node(\"Label\")
+	label.text = event
+	$CanvasLayer/VBoxContainer/MarginContainer/ScrollContainer/VBoxContainer.add_child(panel_instance)
+	match grade:
+		0:
+			panel_instance.theme = grade0
+		1:
+			panel_instance.theme = grade1
+		2: 
+			panel_instance.theme = grade2
+		3:
+			panel_instance.theme = grade3
+		4:
+			panel_instance.theme = grade4
+		_:
+			panel_instance.theme = grade0
+	if can_scroll():
+		scroll()
+
+func _on_auto_btn_pressed() -> void:
+	print(\"按钮被点击！\")
+
+
+func _on_summarize_pressed() -> void:
+	if is_dead:
+		TransitionManager.transition_to(\"res://scenes/MainGame/Summary.tscn\")
+"
+
+[sub_resource type="LabelSettings" id="LabelSettings_nvwg0"]
+font = ExtResource("1_nvwg0")
+
+[node name="MainGame" type="Node2D" unique_id=581620954]
+script = SubResource("GDScript_fyn3n")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=857625131]
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer" unique_id=1051457385]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.13333334, 0.15686275, 0.19215687, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer" unique_id=1302722099]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HSeparator" type="HSeparator" parent="CanvasLayer/VBoxContainer" unique_id=2030214466]
+layout_mode = 2
+
+[node name="StatusHBox" type="HBoxContainer" parent="CanvasLayer/VBoxContainer" unique_id=279758465]
+layout_mode = 2
+alignment = 1
+
+[node name="PlaceHolder8" type="Control" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=1707789475]
+custom_minimum_size = Vector2(10, 0)
+layout_mode = 2
+
+[node name="PlaceHolder" type="Control" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=616634215]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AGE" type="VBoxContainer" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=460235511]
+layout_mode = 2
+
+[node name="Titile" type="Label" parent="CanvasLayer/VBoxContainer/StatusHBox/AGE" unique_id=889066773]
+layout_mode = 2
+text = "年龄"
+label_settings = SubResource("LabelSettings_nvwg0")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label" type="Label" parent="CanvasLayer/VBoxContainer/StatusHBox/AGE" unique_id=157260077]
+layout_mode = 2
+text = "0"
+label_settings = SubResource("LabelSettings_nvwg0")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlaceHolder2" type="Control" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=990567173]
+custom_minimum_size = Vector2(20, 0)
+layout_mode = 2
+
+[node name="CHR" type="VBoxContainer" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=1601897459]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="CanvasLayer/VBoxContainer/StatusHBox/CHR" unique_id=1220249036]
+layout_mode = 2
+text = "运气"
+label_settings = SubResource("LabelSettings_nvwg0")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label" type="Label" parent="CanvasLayer/VBoxContainer/StatusHBox/CHR" unique_id=625666876]
+layout_mode = 2
+text = "0"
+label_settings = SubResource("LabelSettings_nvwg0")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlaceHolder3" type="Control" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=1617390968]
+custom_minimum_size = Vector2(20, 0)
+layout_mode = 2
+
+[node name="INT" type="VBoxContainer" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=2121188093]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="CanvasLayer/VBoxContainer/StatusHBox/INT" unique_id=1408742024]
+layout_mode = 2
+text = "智力"
+label_settings = SubResource("LabelSettings_nvwg0")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label" type="Label" parent="CanvasLayer/VBoxContainer/StatusHBox/INT" unique_id=875496248]
+layout_mode = 2
+text = "0"
+label_settings = SubResource("LabelSettings_nvwg0")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlaceHolder5" type="Control" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=290844401]
+custom_minimum_size = Vector2(20, 0)
+layout_mode = 2
+
+[node name="STR" type="VBoxContainer" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=1048908099]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="CanvasLayer/VBoxContainer/StatusHBox/STR" unique_id=179161963]
+layout_mode = 2
+text = "体质"
+label_settings = SubResource("LabelSettings_nvwg0")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label" type="Label" parent="CanvasLayer/VBoxContainer/StatusHBox/STR" unique_id=498655023]
+layout_mode = 2
+text = "0"
+label_settings = SubResource("LabelSettings_nvwg0")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlaceHolder6" type="Control" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=1839051308]
+custom_minimum_size = Vector2(20, 0)
+layout_mode = 2
+
+[node name="MNY" type="VBoxContainer" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=1717157449]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="CanvasLayer/VBoxContainer/StatusHBox/MNY" unique_id=488271405]
+layout_mode = 2
+text = "家境"
+label_settings = SubResource("LabelSettings_nvwg0")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label" type="Label" parent="CanvasLayer/VBoxContainer/StatusHBox/MNY" unique_id=511334775]
+layout_mode = 2
+text = "0"
+label_settings = SubResource("LabelSettings_nvwg0")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlaceHolder4" type="Control" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=1937053248]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AutoBtn" type="Button" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=168221225]
+custom_minimum_size = Vector2(75, 30)
+layout_mode = 2
+size_flags_vertical = 4
+theme = ExtResource("2_gada6")
+text = "自动"
+script = ExtResource("3_fyn3n")
+
+[node name="PlaceHolder7" type="Control" parent="CanvasLayer/VBoxContainer/StatusHBox" unique_id=1982940648]
+custom_minimum_size = Vector2(10, 0)
+layout_mode = 2
+
+[node name="HSeparator2" type="HSeparator" parent="CanvasLayer/VBoxContainer" unique_id=511014000]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/VBoxContainer" unique_id=771831338]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 5
+
+[node name="ScrollContainer" type="ScrollContainer" parent="CanvasLayer/VBoxContainer/MarginContainer" unique_id=1448710323]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/VBoxContainer/MarginContainer/ScrollContainer" unique_id=893134434]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="HSeparator3" type="HSeparator" parent="CanvasLayer/VBoxContainer" unique_id=16869468]
+visible = false
+layout_mode = 2
+
+[node name="Summarize" type="Button" parent="CanvasLayer/VBoxContainer" unique_id=1476182803]
+visible = false
+custom_minimum_size = Vector2(125, 35)
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("2_gada6")
+text = "人生总结"
+script = ExtResource("3_fyn3n")
+
+[node name="HSeparator4" type="HSeparator" parent="CanvasLayer/VBoxContainer" unique_id=1199410649]
+layout_mode = 2
+
+[connection signal="pressed" from="CanvasLayer/VBoxContainer/StatusHBox/AutoBtn" to="." method="_on_auto_btn_pressed"]
+[connection signal="pressed" from="CanvasLayer/VBoxContainer/Summarize" to="." method="_on_summarize_pressed"]

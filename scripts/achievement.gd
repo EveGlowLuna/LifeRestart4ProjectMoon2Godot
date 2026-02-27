@@ -63,32 +63,34 @@ func checkACHV_end(id: int, current_status: Dictionary):
 		var res = cpinstance.conditional_judgement(_achievements[str(id)]["condition"], [], current_status)
 		return res
 
-func checkACHV(chance: GainAchivementOpportunity, current_status: Dictionary, experienced_events: Array = []):
+func checkACHV(chance: GainAchivementOpportunity, current_status: Dictionary, experienced_events: Array = [], gained_achv: Array = []):
 	var gained = []
+	
 	match chance:
 		GainAchivementOpportunity.START:
 			for i in _achievements:
 				var value = _achievements[i]
 				if value["opportunity"] == "START":
-					if checkACHV_start(value["id"],current_status):
+					if int(value["id"]) not in gained_achv and checkACHV_start(value["id"],current_status):
 						gained.append(value["id"])
 		GainAchivementOpportunity.TRAJECTORY:
 			for i in _achievements:
 				var value = _achievements[i]
 				if value["opportunity"] == "TRAJECTORY":
-					if checkACHV_trajectory(value["id"], experienced_events, current_status):
+					if int(value["id"]) not in gained_achv and checkACHV_trajectory(value["id"], experienced_events, current_status):
+						print("当前成就：" + str(gained_achv) + "，成就添加：" + str(value["id"]))
 						gained.append(value["id"])
 		GainAchivementOpportunity.SUMMARY:
 			for i in _achievements:
 				var value = _achievements[i]
 				if value["opportunity"] == "SUMMARY":
-					if checkACHV_SUMMARY(value["id"], experienced_events, current_status):
+					if int(value["id"]) not in gained_achv and checkACHV_SUMMARY(value["id"], experienced_events, current_status):
 						gained.append(value["id"])
 		GainAchivementOpportunity.END:
 			for i in _achievements:
 				var value = _achievements[i]
 				if value["opportunity"] == "END":
-					if checkACHV_end(value["id"], current_status):
+					if int(value["id"]) not in gained_achv and checkACHV_end(value["id"], current_status):
 						gained.append(value["id"])
 				
 	return gained

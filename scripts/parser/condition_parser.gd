@@ -183,7 +183,7 @@ func _check_exists(left: String, right: String, experienced_events: Array, curre
 	if typeof(value) == TYPE_ARRAY:
 		# 数组类型：检查ID是否在数组中
 		for id in ids:
-			var has = str(id) in value  # 统一转字符串比较
+			var has = id in value  # 直接比较，不转字符串
 			if negate:
 				if has:
 					return false

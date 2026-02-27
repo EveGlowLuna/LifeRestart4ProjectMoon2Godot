@@ -1,0 +1,263 @@
+[gd_scene format=3 uid="uid://gra7l7c7qfqk"]
+
+[ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="1_3ibb3"]
+[ext_resource type="Theme" uid="uid://bt8bcn10cqdq1" path="res://assets/custom_style.tres" id="2_3lieh"]
+[ext_resource type="Script" uid="uid://wnlup63gxufd" path="res://scripts/button/button_anims.gd" id="3_s4d2q"]
+
+[sub_resource type="GDScript" id="GDScript_3ibb3"]
+script/source = "extends Node2D
+
+var judgement:Dictionary = {
+	\"HCHR\": {
+		\"MSG\": \"\",
+		\"LEVEL\": 0,
+	},
+	\"HINT\": {
+		\"MSG\": \"\",
+		\"LEVEL\": 0,
+	},
+	\"HSTR\": {
+		\"MSG\": \"\",
+		\"LEVEL\": 0,
+	},
+	\"HMNY\": {
+		\"MSG\": \"\",
+		\"LEVEL\": 0,
+	},
+	\"HSPR\": {
+		\"MSG\": \"\",
+		\"LEVEL\": 0,
+	},
+	\"HAGE\": {
+		\"MSG\": \"\",
+		\"LEVEL\": 0,
+	},
+	\"SUM\": {
+		\"MSG\": \"\",
+		\"LEVEL\": 0,
+	}
+}
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	var hchr_result = EventManager.judgement_ins.judge(Judgement.JudgementType.HCHR, EventManager.propertydata_ins.status[PropertyData.Types.HCHR])
+	judgement[\"HCHR\"][\"MSG\"] = hchr_result[Judgement.JudgementLevel.judge]
+	judgement[\"HCHR\"][\"LEVEL\"] = hchr_result[Judgement.JudgementLevel.level]
+	
+	var hint_result = EventManager.judgement_ins.judge(Judgement.JudgementType.HINT, EventManager.propertydata_ins.status[PropertyData.Types.HINT])
+	judgement[\"HINT\"][\"MSG\"] = hint_result[Judgement.JudgementLevel.judge]
+	judgement[\"HINT\"][\"LEVEL\"] = hint_result[Judgement.JudgementLevel.level]
+	
+	var hstr_result = EventManager.judgement_ins.judge(Judgement.JudgementType.HSTR, EventManager.propertydata_ins.status[PropertyData.Types.HSTR])
+	judgement[\"HSTR\"][\"MSG\"] = hstr_result[Judgement.JudgementLevel.judge]
+	judgement[\"HSTR\"][\"LEVEL\"] = hstr_result[Judgement.JudgementLevel.level]
+	
+	var hmny_result = EventManager.judgement_ins.judge(Judgement.JudgementType.HMNY, EventManager.propertydata_ins.status[PropertyData.Types.HMNY])
+	judgement[\"HMNY\"][\"MSG\"] = hmny_result[Judgement.JudgementLevel.judge]
+	judgement[\"HMNY\"][\"LEVEL\"] = hmny_result[Judgement.JudgementLevel.level]
+	
+	var hspr_result = EventManager.judgement_ins.judge(Judgement.JudgementType.HSPR, EventManager.propertydata_ins.status[PropertyData.Types.HSPR])
+	judgement[\"HSPR\"][\"MSG\"] = hspr_result[Judgement.JudgementLevel.judge]
+	judgement[\"HSPR\"][\"LEVEL\"] = hspr_result[Judgement.JudgementLevel.level]
+	
+	var hage_result = EventManager.judgement_ins.judge(Judgement.JudgementType.HAGE, EventManager.propertydata_ins.status[PropertyData.Types.HAGE])
+	judgement[\"HAGE\"][\"MSG\"] = hage_result[Judgement.JudgementLevel.judge]
+	judgement[\"HAGE\"][\"LEVEL\"] = hage_result[Judgement.JudgementLevel.level]
+	
+	var sum_result = EventManager.judgement_ins.judge(Judgement.JudgementType.SUM, EventManager.propertydata_ins.status[PropertyData.Types.SUM])
+	judgement[\"SUM\"][\"MSG\"] = sum_result[Judgement.JudgementLevel.judge]
+	judgement[\"SUM\"][\"LEVEL\"] = sum_result[Judgement.JudgementLevel.level]
+	
+	# 显示总结
+	show_summary()
+	
+	# 填充OptionButton
+	_populate_talent_options()
+
+func show_summary():
+	for i in judgement:
+		var name: String = \"\"
+		match i:
+			\"HCHR\":
+				name = \"运气\"
+			\"HINT\":
+				name = \"智力\"
+			\"HSTR\":
+				name = \"体质\"
+			\"HMNY\":
+				name = \"家境\"
+			\"HSPR\":
+				name = \"精神力\"
+			\"HAGE\":
+				name = \"享年\"
+			\"SUM\":
+				name = \"总评\"
+			_:
+				push_error(\"错误的类型：%s\" % str(i))
+		var value = EventManager.propertydata_ins.status[EventManager.propertydata_ins._string_enum_types[i]]
+		var msg = judgement[i][\"MSG\"]
+		var tmsg = \"%s：%s  %s\" % [name, str(value), msg]
+		_add_event_panel(tmsg, judgement[i][\"LEVEL\"])
+
+var eventshower = preload(\"res://scenes/MainGame/components/event_panel.tscn\")
+var grade0 = load(\"res://assets/eventlevels/rate_0.tres\")
+var grade1 = load(\"res://assets/eventlevels/rate_1.tres\")
+var grade2 = load(\"res://assets/eventlevels/rate_2.tres\")
+var grade3 = load(\"res://assets/eventlevels/rate_3.tres\")
+var grade4 = load(\"res://assets/eventlevels/rate_4.tres\")
+func _add_event_panel(event: String = \"默认文本\", grade: int = 0):
+	var panel_instance = eventshower.instantiate()
+	var label = panel_instance.get_node(\"Label\")
+	label.text = event
+	$CanvasLayer/ColorRect/StatusSum.add_child(panel_instance)
+	match grade:
+		0:
+			panel_instance.theme = grade0
+		1:
+			panel_instance.theme = grade1
+		2: 
+			panel_instance.theme = grade2
+		3:
+			panel_instance.theme = grade3
+		4:
+			panel_instance.theme = grade4
+		_:
+			panel_instance.theme = grade0
+
+# 填充天赋选项
+func _populate_talent_options():
+	var option_button = $CanvasLayer/ColorRect/HBoxContainer/OptionButton
+	option_button.clear()
+	
+	# 获取玩家本局选择的天赋
+	var selected_talents = EventManager.propertydata_ins.status[PropertyData.Types.TLT]
+	
+	# 添加\"不保留\"选项
+	option_button.add_item(\"不保留天赋\")
+	option_button.set_item_metadata(0, -1)
+	
+	# 遍历玩家的天赋并添加到OptionButton
+	for i in selected_talents.size():
+		var talent_id = selected_talents[i]
+		var talent_info = EventManager.talent_ins.get_talent_info(int(talent_id))
+		var talent_name = talent_info[\"name\"]
+		var talent_grade = talent_info[\"grade\"]
+		
+		# 格式化显示文本：天赋名(稀有程度：等级)
+		var display_text = talent_name + \"(稀有程度：\" + str(talent_grade + 1) + \")\"
+		
+		# 添加选项
+		option_button.add_item(display_text)
+		# 将天赋ID存储为metadata，方便后续获取
+		option_button.set_item_metadata(i + 1, int(talent_id))
+	
+	# 默认选择第一个（不保留）
+	option_button.selected = 0
+
+func _on_button_pressed() -> void:
+	var option_button = $CanvasLayer/ColorRect/HBoxContainer/OptionButton
+	var selected_index = option_button.selected
+	
+	# 获取选中的天赋ID
+	var talent_id = -1
+	if selected_index >= 0:
+		talent_id = option_button.get_item_metadata(selected_index)
+	
+	# 调用end_game并传入天赋ID
+	EventManager.end_game(talent_id)
+	
+	# 返回主页
+	TransitionManager.transition_to(\"res://scenes/Menu.tscn\")
+"
+
+[sub_resource type="LabelSettings" id="LabelSettings_d3dme"]
+font = ExtResource("1_3ibb3")
+font_size = 35
+
+[node name="Summary" type="Node2D" unique_id=595930007]
+script = SubResource("GDScript_3ibb3")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1961193336]
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer" unique_id=1432324457]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.13333334, 0.15686275, 0.19215687, 1)
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/ColorRect" unique_id=2099309150]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.05
+anchor_right = 0.5
+anchor_bottom = 0.05
+offset_left = -70.0
+offset_top = -24.0
+offset_right = 70.0
+offset_bottom = 24.0
+grow_horizontal = 2
+text = "人生总结"
+label_settings = SubResource("LabelSettings_d3dme")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StatusSum" type="VBoxContainer" parent="CanvasLayer/ColorRect" unique_id=397459918]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.397
+anchor_right = 0.5
+anchor_bottom = 0.397
+offset_left = -299.875
+offset_top = -137.25601
+offset_right = 299.875
+offset_bottom = 136.74399
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/ColorRect" unique_id=1726926768]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.731
+anchor_right = 0.5
+anchor_bottom = 0.731
+offset_left = -216.88525
+offset_top = -24.688019
+offset_right = 216.88525
+offset_bottom = 24.311981
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="CanvasLayer/ColorRect/HBoxContainer" unique_id=1067116827]
+layout_mode = 2
+text = "选择一个天赋，下一轮你还可以遇到："
+
+[node name="PlaceHolder" type="Control" parent="CanvasLayer/ColorRect/HBoxContainer" unique_id=758653235]
+custom_minimum_size = Vector2(20, 0)
+layout_mode = 2
+
+[node name="OptionButton" type="OptionButton" parent="CanvasLayer/ColorRect/HBoxContainer" unique_id=8092654]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Button" type="Button" parent="CanvasLayer" unique_id=718612088]
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.86800003
+anchor_right = 0.5
+anchor_bottom = 0.86800003
+offset_left = -76.5
+offset_top = -25.46399
+offset_right = 76.5
+offset_bottom = 25.03601
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_3lieh")
+text = "返回主页"
+script = ExtResource("3_s4d2q")
+
+[connection signal="pressed" from="CanvasLayer/Button" to="." method="_on_button_pressed"]

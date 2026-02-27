@@ -319,6 +319,10 @@ func _on_start_pressed() -> void:
 		elif current_talent.size() < 4:
 			NotificationManager.show_notification(\"选择少于4个天赋。\")
 			return
+		
+		# 保存选中的天赋到PropertyData
+		EventManager.propertydata_ins.status[PropertyData.Types.TLT] = current_talent.duplicate()
+		
 		var cstatus = EventManager.talent_ins.get_init_status(current_talent)
 		EventManager.status_point = 20 + cstatus[\"status\"]
 		print(current_talent)
@@ -349,6 +353,7 @@ func _on_start_pressed() -> void:
 		EventManager.propertydata_ins.status[PropertyData.Types.STR] = $Control2/status_vbox/STR/SpinBox.value
 		EventManager.propertydata_ins.status[PropertyData.Types.MNY] = $Control2/status_vbox/MNY/SpinBox.value
 		# 天赋在start_game有就不用管了😋
+		TransitionManager.transition_to(\"res://scenes/MainGame/MainGame.tscn\")
 
 
 func _on_spin_box_value_changed(value: float) -> void:
@@ -415,6 +420,60 @@ func _update_all_spinbox_max_values() -> void:
 	int_spinbox.max_value = int_spinbox.value + EventManager.status_point
 	str_spinbox.max_value = str_spinbox.value + EventManager.status_point
 	mny_spinbox.max_value = mny_spinbox.value + EventManager.status_point
+
+
+func _on_random_point_pressed() -> void:
+	# 获取总的可用属性点（包括已分配的）
+	var total_points = EventManager.status_point + prev_chr_value + prev_int_value + prev_str_value + prev_mny_value
+	
+	# 重置所有SpinBox的值
+	$Control2/status_vbox/CHR/SpinBox.value = 0
+	$Control2/status_vbox/INT/SpinBox.value = 0
+	$Control2/status_vbox/STR/SpinBox.value = 0
+	$Control2/status_vbox/MNY/SpinBox.value = 0
+	
+	# 重置旧值记录
+	prev_chr_value = 0
+	prev_int_value = 0
+	prev_str_value = 0
+	prev_mny_value = 0
+	
+	# 恢复所有属性点
+	EventManager.status_point = total_points
+	
+	# 随机分配属性点
+	var remaining = total_points
+	
+	# 为CHR随机分配
+	var chr_value = randi() % (remaining + 1)
+	$Control2/status_vbox/CHR/SpinBox.value = chr_value
+	prev_chr_value = chr_value
+	remaining -= chr_value
+	
+	# 为INT随机分配
+	var int_value = randi() % (remaining + 1)
+	$Control2/status_vbox/INT/SpinBox.value = int_value
+	prev_int_value = int_value
+	remaining -= int_value
+	
+	# 为STR随机分配
+	var str_value = randi() % (remaining + 1)
+	$Control2/status_vbox/STR/SpinBox.value = str_value
+	prev_str_value = str_value
+	remaining -= str_value
+	
+	# MNY获得所有剩余点数
+	$Control2/status_vbox/MNY/SpinBox.value = remaining
+	prev_mny_value = remaining
+	
+	# 更新剩余属性点
+	EventManager.status_point = 0
+	
+	# 更新所有SpinBox的max_value
+	_update_all_spinbox_max_values()
+	
+	# 更新显示
+	$Control2/status_vbox/status_point.text = \"可用属性点：0\"
 "
 
 [sub_resource type="LabelSettings" id="LabelSettings_e4ct5"]
@@ -607,6 +666,8 @@ offset_bottom = 24.0
 grow_horizontal = 2
 text = "天赋选择"
 label_settings = SubResource("LabelSettings_lggaa")
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Start" type="Button" parent="." unique_id=711651619]
 visible = false
@@ -631,4 +692,5 @@ script = ExtResource("2_lggaa")
 [connection signal="value_changed" from="Control2/status_vbox/INT/SpinBox" to="." method="_on_int_spin_box_value_changed"]
 [connection signal="value_changed" from="Control2/status_vbox/STR/SpinBox" to="." method="_on_str_spin_box_value_changed"]
 [connection signal="value_changed" from="Control2/status_vbox/MNY/SpinBox" to="." method="_on_mny_spin_box_value_changed"]
+[connection signal="pressed" from="Control2/status_vbox/RandomPoint" to="." method="_on_random_point_pressed"]
 [connection signal="pressed" from="Start" to="." method="_on_start_pressed"]

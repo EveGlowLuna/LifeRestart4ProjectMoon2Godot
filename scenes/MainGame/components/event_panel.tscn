@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://bfxhe3fryq6po"]
+
+[ext_resource type="Theme" uid="uid://bbq35equ60ywl" path="res://assets/eventlevels/rate_0.tres" id="1_378ma"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_h25tl"]
+
+[node name="Panel" type="Panel" unique_id=813486502]
+custom_minimum_size = Vector2(0, 50)
+offset_right = 157.0
+offset_bottom = 40.0
+mouse_filter = 2
+theme = ExtResource("1_378ma")
+
+[node name="Label" type="Label" parent="." unique_id=251464527]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "示例文本"
+label_settings = SubResource("LabelSettings_h25tl")
+horizontal_alignment = 1
+vertical_alignment = 1
+max_lines_visible = 2

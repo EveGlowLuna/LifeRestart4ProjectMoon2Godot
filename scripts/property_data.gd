@@ -80,8 +80,10 @@ static var _string_enum_types = {
 	
 	"LAGE": Types.LAGE,
 	"HAGE": Types.HAGE,
+	"LCHR": Types.LCHR,
 	"HCHR": Types.HCHR,
 	"LINT": Types.LINT,
+	"HINT": Types.HINT,
 	"LSTR": Types.LSTR,
 	"HSTR": Types.HSTR,
 	"LMNY": Types.LMNY,
@@ -146,6 +148,7 @@ func RESET():
 	status[Types.ATLT] = []
 	status[Types.AEVT] = []
 	status[Types.ACHV] = []
+	load_value()
 
 func load_value():
 	datautil.init_data()
@@ -189,7 +192,8 @@ func load_value():
 	# 比率
 	status[Types.REVT] = float(status[Types.CEVT]) / float(status[Types.TEVT]) if status[Types.TEVT] > 0 else 0.0
 	status[Types.RTLT] = float(status[Types.CTLT]) / float(status[Types.TTLT]) if status[Types.TTLT] > 0 else 0.0
-	status[Types.RACHV] = float(status[Types.CACHV]) / float(status[Types.ACHV]) if status[Types.TACHV] > 0 else 0.0
+	status[Types.RACHV] = float(status[Types.CACHV]) / float(status[Types.TACHV]) if status[Types.TACHV] > 0 else 0.0
+
 	
 	
 	

@@ -180,7 +180,7 @@ func _get_random_talent_by_grade(target_grade: int, exclude_list: Array) -> int:
 	
 	return candidates[randi() % candidates.size()]
 
-func random_talent(include: Variant = null, addition_values: Dictionary = {}) -> Array:
+func random_talent(include: Variant = null, addition_values: Dictionary = {}, reserved_talent_id: int = -1) -> Array:
 	# 1. 计算调整后的概率
 	var rate = get_rate(addition_values)
 	
@@ -203,12 +203,24 @@ func random_talent(include: Variant = null, addition_values: Dictionary = {}) ->
 	
 	# 3. 按等级分组天赋
 	var talent_list = {0: [], 1: [], 2: [], 3: [], 4: []}
+	var reserved_talent = null
+	
 	for id_str in _talents:
 		var talent = _talents[id_str]
 		var talent_id = int(id_str)
 		
 		# 跳过独占天赋
 		if talent.has("exclusive") and talent["exclusive"] == 1:
+			continue
+		
+		# 处理保留天赋
+		if reserved_talent_id != -1 and talent_id == reserved_talent_id:
+			reserved_talent = {
+				"id": talent_id,
+				"grade": int(talent["grade"]),
+				"name": talent["name"],
+				"description": talent.get("description", "")
+			}
 			continue
 		
 		# 处理include（如果有指定包含的天赋）
@@ -232,7 +244,14 @@ func random_talent(include: Variant = null, addition_values: Dictionary = {}) ->
 	
 	# 4. 抽取指定数量
 	var result = []
-	for i in range(_talent_pull_count):
+	var pull_count = _talent_pull_count
+	
+	# 如果有保留天赋，减少抽取数量
+	if reserved_talent != null:
+		pull_count = 14
+		result.append(reserved_talent)
+	
+	for i in range(pull_count):
 		# 第一个位置留给include（如果有）
 		if i == 0 and include != null and typeof(include) == TYPE_DICTIONARY:
 			result.append(include)
@@ -321,7 +340,7 @@ func check_conditional_talents(experienced_events: Array, current_status: Dictio
 	for talent_data in condition_talents:
 		
 		var condition = talent_data["condition"]
-		if cp.parse_branch(condition, experienced_events, current_status):
+		if cp.conditional_judgement(condition, experienced_events, current_status):
 			
 			var effect = talent_data["effect"]
 			if effect != null:

@@ -283,7 +283,7 @@ var SUM_judgement: Dictionary = {
 }
 
 func judge(type: JudgementType, value: int) -> Dictionary:
-	match JudgementType:
+	match type:
 		JudgementType.HCHR:
 			var keys = HCHR_judgement.keys()
 			keys.sort()

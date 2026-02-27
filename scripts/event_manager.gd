@@ -26,16 +26,23 @@ func random_talent() -> Array:
 		"TMS": propertydata_ins.status.get(PropertyData.Types.TMS, 0),
 		"CACHV": propertydata_ins.status.get(PropertyData.Types.CACHV, 0)
 	}
+	
+	# 获取保留天赋ID
+	var reserved_id = -1
+	var ext_value = propertydata_ins.status.get(PropertyData.Types.EXT, null)
+	if ext_value != null and ext_value != 0:
+		reserved_id = int(ext_value)
+	
 	# 调用带概率的版本
-	return talent_ins.random_talent(null, addition_values)
+	return talent_ins.random_talent(null, addition_values, reserved_id)
 
-func apply_talent(talents: Array[int]):
+func apply_talent(talents: Array):
 	propertydata_ins.status[PropertyData.Types.TLT] = talents
 	var replaced_talents = []
 	for i in talents:
 		if talent_ins._talents[str(i)].has("replacement"):
 			var replaced = talent_ins.apply_replacement(int(i))
-			propertydata_ins.status[PropertyData.Types.TLT].earse(i)
+			propertydata_ins.status[PropertyData.Types.TLT].erase(i)
 			propertydata_ins.status[PropertyData.Types.TLT].append(replaced)
 			replaced_talents.append({
 			"origin_talent": talent_ins._talents[str(i)]["id"],
@@ -43,10 +50,9 @@ func apply_talent(talents: Array[int]):
 			})
 	return replaced_talents
 
-func start_game(selected_talent):
-	
+func start_game(selected_talent: Array):
 	var replaced_talents = apply_talent(selected_talent)
-	propertydata_ins.RESET()
+	
 	
 	for item in propertydata_ins.status[PropertyData.Types.TLT]:
 		if talent_ins._talents[str(item)].has("effect") and !talent_ins._talents[str(item)].has("condition"):
@@ -62,6 +68,17 @@ func start_game(selected_talent):
 
 func check_event(event_id: int, ignore_no_random: bool = false) -> bool:
 	var event = eventlist[str(event_id)]
+	if event_id == 50630:
+		print("检查 50630:")
+		print("  EVT列表: ", propertydata_ins.status[PropertyData.Types.EVT])
+		print("  exclude条件: ", event.get("exclude", "无"))
+		if event.has("exclude"):
+			var result = condition_parser_ins.conditional_judgement(
+				event["exclude"], 
+				propertydata_ins.status[PropertyData.Types.EVT], 
+				propertydata_ins.status
+			)
+			print("  exclude判断结果: ", result)
 	# 检查NoRandom
 	if not ignore_no_random and event.has("NoRandom") and event["NoRandom"] == 1:
 		return false
@@ -92,13 +109,18 @@ func summary_game():
 	}
 	}
 
-func restart_game():
+func end_game(ext_id: int = -1):
 	# 重开次数+1
 	propertydata_ins.status[PropertyData.Types.TMS] += 1
 	# 检查END成就
 	gainACHV(Achievement.GainAchivementOpportunity.END)
+	# 设置保留天赋
+	if ext_id != -1:
+		propertydata_ins.status[PropertyData.Types.EXT] = ext_id
 	# 保存数据
 	propertydata_ins.save_value()
+	# 重置加载
+	propertydata_ins.RESET()
 
 func random_event(year: int) -> int:
 	var availble_events = []
@@ -114,17 +136,22 @@ func random_event(year: int) -> int:
 	var final_event = weight_ins.random_select_from_parsed(availble_events)
 	if final_event != "":
 		return int(final_event)
+	if availble_events.is_empty():
+		print("警告: 年龄 ", year, " 没有可用事件")
+		return 10069
+	elif filtered_events.is_empty():
+		print("警告：年龄 ", year, " 中所有事件均被过滤")
+		return 10069
 	return -1
 
 func is_dead() -> bool:
 	return propertydata_ins.status[PropertyData.Types.LIF] < 1
 
 func gainACHV(opportunity: Achievement.GainAchivementOpportunity) -> Array:
-	var achvs = achievement_ins.checkACHV(opportunity, propertydata_ins.status, propertydata_ins.status[PropertyData.Types.EVT])
+	var achvs = achievement_ins.checkACHV(opportunity, propertydata_ins.status, propertydata_ins.status[PropertyData.Types.EVT], propertydata_ins.status[PropertyData.Types.ACHV])
 	if achvs != []:
-		var achv: Array = propertydata_ins.status[PropertyData.Types.ACHV]
-		achv.append(achvs)
-		propertydata_ins.status[PropertyData.Types.ACHV] = achv
+		for achv_id in achvs:
+			propertydata_ins.add_achievement(achv_id)
 	return achvs
 
 func next_year() -> int:
@@ -137,7 +164,8 @@ func execute_event(event_id: int) -> Dictionary:
 	var result = {
 		"description": event.get("event", ""),
 		"postEvent": event.get("postEvent", null),
-		"grade": event.get("grade", 0)
+		"grade": event.get("grade", 0),
+		"final_event_id": event_id  # 记录最终执行的事件ID
 	}
 	# 处理分支
 	if event.has("branch"):
@@ -154,7 +182,9 @@ func execute_event(event_id: int) -> Dictionary:
 				# 记录事件
 				propertydata_ins.add_event(event_id)
 				# 递归执行分支
-				result["branch"] = execute_event(next_id)
+				var branch_result = execute_event(next_id)
+				result["branch"] = branch_result
+				result["final_event_id"] = branch_result["final_event_id"]  # 使用branch的最终ID
 				return result
 	# 没有分支或都不满足
 	if event.has("effect"):
@@ -166,6 +196,7 @@ func execute_next(from: int = -1) -> Dictionary:
 	var next_event
 	var triggered_talent = []
 	
+	# 触发条件天赋
 	var talent_effects = talent_ins.check_conditional_talents(
 		propertydata_ins.status[PropertyData.Types.EVT],
 		propertydata_ins.status
@@ -173,18 +204,35 @@ func execute_next(from: int = -1) -> Dictionary:
 	if talent_effects.size() > 0:
 		propertydata_ins.apply_effects(talent_effects)
 		triggered_talent.append(talent_effects)
+	
+	# 确定要执行的事件
 	if from != -1 and eventlist[str(from)].has("branch"):
-		var task_id = condition_parser_ins.parse_branch(eventlist[str(from)]["branch"], propertydata_ins.status[PropertyData.Types.EVT], propertydata_ins.status)
+		var task_id = condition_parser_ins.parse_branch(
+			eventlist[str(from)]["branch"], 
+			propertydata_ins.status[PropertyData.Types.EVT], 
+			propertydata_ins.status
+		)
 		if task_id != "":
 			next_event = int(task_id)
+		else:
+			# 如果没有满足的分支，随机选一个
+			next_event = random_event(propertydata_ins.status[PropertyData.Types.AGE])
 	else:
 		next_event = random_event(propertydata_ins.status[PropertyData.Types.AGE])
+	
+	# 检查是否真的选到了事件
+	if next_event == -1 or next_event == null:
+		push_error("没有可用事件！年龄: ", propertydata_ins.status[PropertyData.Types.AGE])
+		next_event = "10069"
+	
 	var des = execute_event(next_event)
 	var gained_achivements = gainACHV(Achievement.GainAchivementOpportunity.TRAJECTORY)
+	
 	return {
-	"event": int(next_event),
-	"description": des,
-	"triggered_talents": triggered_talent,
-	"gained_achivements": gained_achivements,
-	"dead": is_dead()
+		"event": next_event,
+		"final_event": des.get("final_event_id", next_event),  # 返回最终执行的事件ID
+		"description": des,
+		"triggered_talents": triggered_talent,
+		"gained_achivements": gained_achivements,
+		"dead": is_dead()
 	}
