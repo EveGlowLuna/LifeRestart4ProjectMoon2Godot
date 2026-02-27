@@ -9,9 +9,10 @@
 
 ## 怎么玩？
 
-目前尚未完工，之后会有Web版供手机、电脑等设备游玩。
+- https://life-restart4project-moon.netlify.app/
+- 但可能加载会慢（如果没有更新，第二次就能直接进了）
 
-预计会同时支持手机（不会上架应用商店/游戏商店！）/电脑（不会上架Steam!）/浏览器三端
+- 同时支持Android/Windows、macOS/Linux四端。在 **Release 页面**下载。
 
 暂不支持的功能：
 
