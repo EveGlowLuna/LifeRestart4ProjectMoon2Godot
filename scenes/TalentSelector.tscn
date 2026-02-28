@@ -33,30 +33,66 @@ func _update_initial_ui() -> void:
 	var viewport_height = viewport_size.y
 	var viewport_width = viewport_size.x
 	
+	# 判断是否为竖屏模式
+	var is_portrait = viewport_height > viewport_width
+	
 	# 更新Start按钮的字体大小和按钮大小
-	var start_font_size = max(16, int(viewport_height * 0.025))
-	var start_button_height = max(40, int(viewport_height * 0.06))
-	var start_button_width = max(150, int(viewport_size.x * 0.15))
+	var start_font_size: int
+	var start_button_height: int
+	var start_button_width: int
+	
+	if is_portrait:
+		start_font_size = max(14, int(viewport_width * 0.038))
+		start_button_height = max(35, int(viewport_height * 0.05))
+		start_button_width = max(120, int(viewport_width * 0.35))
+	else:
+		start_font_size = max(16, int(viewport_height * 0.025))
+		start_button_height = max(40, int(viewport_height * 0.06))
+		start_button_width = max(150, int(viewport_size.x * 0.15))
+	
 	$Start.custom_minimum_size = Vector2(start_button_width, start_button_height)
 	$Start.begin_bulk_theme_override()
 	$Start.add_theme_font_size_override(\"font_size\", start_font_size)
 	$Start.end_bulk_theme_override()
 	
 	# 更新Title标签的字体大小 - 创建新的 LabelSettings 避免修改共享资源
-	var title_font_size = max(24, int(viewport_height * 0.05))
+	var title_font_size: int
+	if is_portrait:
+		title_font_size = max(20, int(viewport_width * 0.065))
+	else:
+		title_font_size = max(24, int(viewport_height * 0.05))
+	
 	var new_label_settings = LabelSettings.new()
 	new_label_settings.font = $TitleLabel.label_settings.font
 	new_label_settings.font_size = title_font_size
 	$TitleLabel.label_settings = new_label_settings
 	
-	# 更新Control/RandomTLTBtn的字体大小
-	var random_btn_font_size = max(16, int(viewport_height * 0.025))
+	# 更新Control/RandomTLTBtn的字体大小和尺寸
+	var random_btn_font_size: int
+	var random_btn_width: int
+	var random_btn_height: int
+	
+	if is_portrait:
+		random_btn_font_size = max(16, int(viewport_width * 0.045))
+		random_btn_width = max(140, int(viewport_width * 0.4))
+		random_btn_height = max(45, int(viewport_height * 0.055))
+	else:
+		random_btn_font_size = max(16, int(viewport_height * 0.025))
+		random_btn_width = 165
+		random_btn_height = 41
+	
+	$Control/RandomTLTBtn.custom_minimum_size = Vector2(random_btn_width, random_btn_height)
 	$Control/RandomTLTBtn.begin_bulk_theme_override()
 	$Control/RandomTLTBtn.add_theme_font_size_override(\"font_size\", random_btn_font_size)
 	$Control/RandomTLTBtn.end_bulk_theme_override()
 	
 	# 更新概率Label的字体大小
-	var prob_font_size = max(14, int(viewport_height * 0.022))
+	var prob_font_size: int
+	if is_portrait:
+		prob_font_size = max(12, int(viewport_width * 0.032))
+	else:
+		prob_font_size = max(14, int(viewport_height * 0.022))
+	
 	var prob_label_settings = LabelSettings.new()
 	prob_label_settings.font = $Label.label_settings.font
 	prob_label_settings.font_size = prob_font_size
@@ -141,43 +177,84 @@ func _update_button_layout() -> void:
 	var viewport_height = viewport_size.y
 	var viewport_width = viewport_size.x
 	
+	# 判断是否为竖屏模式
+	var is_portrait = viewport_height > viewport_width
+	
 	# 为 Start 按钮预留空间（底部 8%）
 	var start_button_space = viewport_height * 0.08
 	
 	# 计算可用高度（从10%到90%，减去Start按钮空间）
 	var available_height = viewport_height * 0.8 - start_button_space
-	var button_height = available_height / 15.0
+	
+	# 竖屏模式下按钮更小更紧凑
+	var button_height: float
+	if is_portrait:
+		button_height = available_height / 19.5  # 从18改为19.5，让按钮更矮
+	else:
+		button_height = available_height / 15.0
 	
 	# 动态计算字体大小
-	var font_size = max(14, int(button_height * 0.45))
+	var font_size: int
+	if is_portrait:
+		font_size = max(10, int(button_height * 0.34))  # 从0.36改为0.34，字体更小
+	else:
+		font_size = max(14, int(button_height * 0.45))
 	
 	# 动态计算按钮宽度
-	var button_width = min(viewport_width * 0.7, 700)
+	var button_width: int
+	if is_portrait:
+		button_width = min(viewport_width * 0.95, 700)  # 从0.92改为0.95，按钮更宽
+	else:
+		button_width = min(viewport_width * 0.7, 700)
 	
-	# Control/VBoxContainer 向上移：从 10% 开始（之前是12%）
-	var vbox_start_y = viewport_height * 0.10
+	# Control/VBoxContainer 居中显示
+	var vbox_start_y: float
+	if is_portrait:
+		# 竖屏模式：计算实际内容高度，然后居中
+		var total_buttons_height = button_height * 15  # 15个按钮的总高度
+		var available_space = viewport_height - start_button_space  # 可用空间（减去底部Start按钮）
+		vbox_start_y = (available_space - total_buttons_height) / 2.0  # 居中
+	else:
+		# 横屏模式：保持原来的10%
+		vbox_start_y = viewport_height * 0.10
+	
 	$Control/VBoxContainer.position = Vector2(viewport_width / 2.0 - button_width / 2.0, vbox_start_y)
 	$Control/VBoxContainer.size = Vector2(button_width, available_height)
 	
 	# 更新所有按钮 - 使用 begin_bulk_theme_override 确保覆盖生效
 	for child in $Control/VBoxContainer.get_children():
 		if child is Button:
-			child.custom_minimum_size.y = button_height
+			child.custom_minimum_size = Vector2(button_width, button_height)
 			child.begin_bulk_theme_override()
 			child.add_theme_font_size_override(\"font_size\", font_size)
 			child.end_bulk_theme_override()
 	
 	# 更新Start按钮的字体大小和按钮大小
-	var start_font_size = max(16, int(viewport_height * 0.025))
-	var start_button_height = max(40, int(viewport_height * 0.06))
-	var start_button_width = max(150, int(viewport_width * 0.15))
+	var start_font_size: int
+	var start_button_height: int
+	var start_button_width: int
+	
+	if is_portrait:
+		start_font_size = max(14, int(viewport_width * 0.038))
+		start_button_height = max(35, int(viewport_height * 0.05))
+		start_button_width = max(120, int(viewport_width * 0.35))
+	else:
+		start_font_size = max(16, int(viewport_height * 0.025))
+		start_button_height = max(40, int(viewport_height * 0.06))
+		start_button_width = max(150, int(viewport_width * 0.15))
+	
 	$Start.custom_minimum_size = Vector2(start_button_width, start_button_height)
 	$Start.begin_bulk_theme_override()
 	$Start.add_theme_font_size_override(\"font_size\", start_font_size)
 	$Start.end_bulk_theme_override()
 	
 	# 更新Title标签的字体大小
-	var title_font_size = max(24, int(viewport_height * 0.05))
+	var title_font_size: int
+	if is_portrait:
+		title_font_size = max(20, int(viewport_width * 0.065))
+	else:
+		title_font_size = max(24, int(viewport_height * 0.05))
+	
 	var new_label_settings = LabelSettings.new()
 	new_label_settings.font = $TitleLabel.label_settings.font
 	new_label_settings.font_size = title_font_size
@@ -254,10 +331,26 @@ func _on_button_pressed(button_index: int):
 				btn.disabled = true
 	
 	# 重新应用字体大小
-	var viewport_height = get_viewport_rect().size.y
-	var available_height = viewport_height * 0.8 - viewport_height * 0.08
-	var button_height = available_height / 15.0
-	var font_size = max(14, int(button_height * 0.45))
+	var viewport_size = get_viewport_rect().size
+	var viewport_height = viewport_size.y
+	var viewport_width = viewport_size.x
+	var is_portrait = viewport_height > viewport_width
+	
+	var start_button_space = viewport_height * 0.08
+	var available_height = viewport_height * 0.8 - start_button_space
+	
+	var button_height: float
+	if is_portrait:
+		button_height = available_height / 19.5
+	else:
+		button_height = available_height / 15.0
+	
+	var font_size: int
+	if is_portrait:
+		font_size = max(10, int(button_height * 0.34))  # 从0.36改为0.34
+	else:
+		font_size = max(14, int(button_height * 0.45))
+	
 	button.begin_bulk_theme_override()
 	button.add_theme_font_size_override(\"font_size\", font_size)
 	button.end_bulk_theme_override()
@@ -285,16 +378,33 @@ func _update_status_ui() -> void:
 	var viewport_height = viewport_size.y
 	var viewport_width = viewport_size.x
 	
+	# 判断是否为竖屏模式
+	var is_portrait = viewport_height > viewport_width
+	
 	# 计算属性UI的字体大小
-	var status_title_font_size = max(16, int(viewport_height * 0.03))
-	var status_label_font_size = max(14, int(viewport_height * 0.025))
+	var status_title_font_size: int
+	var status_label_font_size: int
+	
+	if is_portrait:
+		status_title_font_size = max(15, int(viewport_width * 0.045))  # 从0.042改为0.045
+		status_label_font_size = max(14, int(viewport_width * 0.04))  # 从0.035改为0.04，增大字体
+	else:
+		status_title_font_size = max(16, int(viewport_height * 0.03))
+		status_label_font_size = max(14, int(viewport_height * 0.025))
 	
 	# 计算VBox的大小和位置（增加高度以容纳按钮）
-	var vbox_width = min(viewport_width * 0.85, 450)  # 从30%增加到85%，最大宽度从350增加到450
-	var vbox_height = viewport_height * 0.5  # 从40%增加到50%
+	var vbox_width: int
+	var vbox_height: int
+	var vbox_y: float
 	
-	# 位置：向下移动（从30%改为35%）
-	var vbox_y = viewport_height * 0.35
+	if is_portrait:
+		vbox_width = min(viewport_width * 0.85, 450)
+		vbox_height = viewport_height * 0.55
+		vbox_y = viewport_height * 0.4
+	else:
+		vbox_width = min(viewport_width * 0.85, 450)
+		vbox_height = viewport_height * 0.5
+		vbox_y = viewport_height * 0.35
 	
 	# 更新status_vbox的位置和大小
 	$Control2/status_vbox.position = Vector2(viewport_width / 2.0 - vbox_width / 2.0, vbox_y - vbox_height / 2.0)
@@ -307,7 +417,11 @@ func _update_status_ui() -> void:
 	$Control2/status_vbox/status_point.label_settings = status_point_settings
 	
 	# 计算每个HBoxContainer的最小高度
-	var hbox_height = max(30, int(viewport_height * 0.05))
+	var hbox_height: int
+	if is_portrait:
+		hbox_height = max(35, int(viewport_height * 0.055))  # 从0.045改为0.055，增加高度
+	else:
+		hbox_height = max(30, int(viewport_height * 0.05))
 	
 	# 更新各个属性标签的字体和HBox高度
 	for prop in [\"CHR\", \"INT\", \"STR\", \"MNY\"]:
@@ -326,10 +440,25 @@ func _update_status_ui() -> void:
 		spinbox.begin_bulk_theme_override()
 		spinbox.add_theme_font_size_override(\"font_size\", status_label_font_size)
 		spinbox.end_bulk_theme_override()
+		
+		# 更新SpinBox内部LineEdit的字体（这是显示数字的部分）
+		var line_edit = spinbox.get_line_edit()
+		if line_edit:
+			line_edit.begin_bulk_theme_override()
+			line_edit.add_theme_font_size_override(\"font_size\", status_label_font_size)
+			line_edit.end_bulk_theme_override()
 	
 	# 更新RandomPoint按钮的字体大小和高度
-	var button_font_size = max(14, int(viewport_height * 0.025))
-	var button_height = max(35, int(viewport_height * 0.055))
+	var button_font_size: int
+	var button_height: int
+	
+	if is_portrait:
+		button_font_size = max(12, int(viewport_width * 0.035))
+		button_height = max(32, int(viewport_height * 0.048))
+	else:
+		button_font_size = max(14, int(viewport_height * 0.025))
+		button_height = max(35, int(viewport_height * 0.055))
+	
 	$Control2/status_vbox/RandomPoint.custom_minimum_size.y = button_height
 	$Control2/status_vbox/RandomPoint.begin_bulk_theme_override()
 	$Control2/status_vbox/RandomPoint.add_theme_font_size_override(\"font_size\", button_font_size)
@@ -639,7 +768,7 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="Control2/status_vbox/STR" unique_id=1432216332]
 layout_mode = 2
-text = "体制"
+text = "体质"
 label_settings = SubResource("LabelSettings_07hf6")
 
 [node name="Placeholder" type="Control" parent="Control2/status_vbox/STR" unique_id=475184845]

@@ -28,9 +28,18 @@ func _on_viewport_size_changed() -> void:
 func _update_ui_scale() -> void:
 	var viewport_size = get_viewport_rect().size
 	var viewport_height = viewport_size.y
+	var viewport_width = viewport_size.x
+	
+	# 判断是否为竖屏模式
+	var is_portrait = viewport_height > viewport_width
 	
 	# 标题字体
-	var title_font_size = max(25, int(viewport_height * 0.045))
+	var title_font_size: int
+	if is_portrait:
+		title_font_size = max(20, int(viewport_width * 0.055))
+	else:
+		title_font_size = max(25, int(viewport_height * 0.045))
+	
 	var title_label = $CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer2/TitleLabel
 	var title_settings = LabelSettings.new()
 	title_settings.font = title_label.label_settings.font
@@ -38,9 +47,18 @@ func _update_ui_scale() -> void:
 	title_label.label_settings = title_settings
 	
 	# 按钮字体和大小
-	var button_font_size = max(14, int(viewport_height * 0.022))
-	var button_height = max(30, int(viewport_height * 0.045))
-	var button_width = max(75, int(viewport_size.x * 0.08))
+	var button_font_size: int
+	var button_height: int
+	var button_width: int
+	
+	if is_portrait:
+		button_font_size = max(12, int(viewport_width * 0.032))
+		button_height = max(30, int(viewport_height * 0.04))
+		button_width = max(70, int(viewport_width * 0.18))
+	else:
+		button_font_size = max(14, int(viewport_height * 0.022))
+		button_height = max(30, int(viewport_height * 0.045))
+		button_width = max(75, int(viewport_size.x * 0.08))
 	
 	for btn_name in [\"GlobalBtn\", \"BackBtn\"]:
 		var btn = $CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer2/PlaceHolder3.get_node(btn_name)
@@ -51,7 +69,12 @@ func _update_ui_scale() -> void:
 		btn.end_bulk_theme_override()
 	
 	# 进度标签字体
-	var label_font_size = max(14, int(viewport_height * 0.022))
+	var label_font_size: int
+	if is_portrait:
+		label_font_size = max(12, int(viewport_width * 0.032))
+	else:
+		label_font_size = max(14, int(viewport_height * 0.022))
+	
 	var progress_label = $CanvasLayer/ColorRect/MarginContainer/VBoxContainer/HBoxContainer/Label
 	var label_settings = LabelSettings.new()
 	label_settings.font = progress_label.label_settings.font
@@ -59,7 +82,12 @@ func _update_ui_scale() -> void:
 	progress_label.label_settings = label_settings
 	
 	# 等级标签字体
-	var level_font_size = max(16, int(viewport_height * 0.025))
+	var level_font_size: int
+	if is_portrait:
+		level_font_size = max(14, int(viewport_width * 0.038))
+	else:
+		level_font_size = max(16, int(viewport_height * 0.025))
+	
 	for i in range(5):
 		var level_label = $CanvasLayer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/ACHVS.get_node(\"Label\" + (\"\" if i == 0 else str(i + 1)))
 		var level_settings = LabelSettings.new()
@@ -255,7 +283,7 @@ theme = SubResource("Theme_qhcjn")
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
-[node name="ScrollContainer" type="ScrollContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer" unique_id=1739083608]
+[node name="ScrollContainer" type="VBoxContainer" parent="CanvasLayer/ColorRect/MarginContainer/VBoxContainer" unique_id=1552848116]
 layout_mode = 2
 size_flags_vertical = 3
 

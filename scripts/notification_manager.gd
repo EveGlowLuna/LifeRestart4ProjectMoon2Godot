@@ -34,6 +34,9 @@ func show_notification(message: String, duration: float = NOTIFICATION_DURATION)
 	# 添加到场景
 	add_child(notification)
 	
+	# 等待一帧让通知的 _ready 和 _update_ui_scale 执行完毕
+	await get_tree().process_frame
+	
 	# 计算初始位置（屏幕外右侧）
 	var viewport_size = get_viewport().get_visible_rect().size
 	var notification_size = notification.custom_minimum_size

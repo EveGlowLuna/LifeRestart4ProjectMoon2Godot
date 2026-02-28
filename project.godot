@@ -26,10 +26,15 @@ NotificationManager="*res://scripts/notification_manager.gd"
 [display]
 
 window/stretch/aspect="expand"
+window/handheld/orientation=1
 
 [dotnet]
 
 project/assembly_name="LifeRestart4ProjectMoon"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/safe_area_x/plugin.cfg")
 
 [physics]
 

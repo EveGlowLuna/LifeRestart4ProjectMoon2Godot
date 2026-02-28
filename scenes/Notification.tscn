@@ -2,6 +2,47 @@
 
 [ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="1_font"]
 
+[sub_resource type="GDScript" id="GDScript_notification"]
+script/source = "extends PanelContainer
+
+func _ready() -> void:
+	get_viewport().size_changed.connect(_update_ui_scale)
+	call_deferred(\"_update_ui_scale\")
+
+func _update_ui_scale() -> void:
+	var viewport_size = get_viewport_rect().size
+	var viewport_height = viewport_size.y
+	var viewport_width = viewport_size.x
+	
+	# 判断是否为竖屏模式
+	var is_portrait = viewport_height > viewport_width
+	
+	# 计算字体大小和通知尺寸
+	var font_size: int
+	var notification_width: int
+	var notification_height: int
+	
+	if is_portrait:
+		font_size = max(13, int(viewport_width * 0.038))
+		notification_width = max(250, int(viewport_width * 0.85))
+		notification_height = max(70, int(viewport_height * 0.09))
+	else:
+		font_size = max(16, int(viewport_height * 0.025))
+		notification_width = 300
+		notification_height = 80
+	
+	# 更新尺寸
+	custom_minimum_size = Vector2(notification_width, notification_height)
+	
+	# 更新字体
+	var label = $MarginContainer/Label
+	var label_settings = LabelSettings.new()
+	label_settings.font = label.label_settings.font
+	label_settings.font_size = font_size
+	label.label_settings = label_settings
+	label.custom_minimum_size.x = notification_width - 30
+"
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
 bg_color = Color(0.2, 0.23, 0.27, 0.95)
 corner_radius_top_left = 8
@@ -22,6 +63,7 @@ offset_right = 300.0
 offset_bottom = 80.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+script = SubResource("GDScript_notification")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2

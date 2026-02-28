@@ -85,11 +85,24 @@ func _on_viewport_size_changed() -> void:
 func _update_ui_scale() -> void:
 	var viewport_size = get_viewport_rect().size
 	var viewport_height = viewport_size.y
+	var viewport_width = viewport_size.x
+	
+	# 判断是否为竖屏模式
+	var is_portrait = viewport_height > viewport_width
 	
 	# 计算字体大小
-	var status_font_size = max(14, int(viewport_height * 0.025))
-	var button_font_size = max(14, int(viewport_height * 0.022))
-	var event_font_size = max(15, int(viewport_height * 0.024))
+	var status_font_size: int
+	var button_font_size: int
+	var event_font_size: int
+	
+	if is_portrait:
+		status_font_size = max(12, int(viewport_width * 0.035))
+		button_font_size = max(12, int(viewport_width * 0.032))
+		event_font_size = max(13, int(viewport_width * 0.036))
+	else:
+		status_font_size = max(14, int(viewport_height * 0.025))
+		button_font_size = max(14, int(viewport_height * 0.022))
+		event_font_size = max(15, int(viewport_height * 0.024))
 	
 	# 更新状态栏字体
 	for status in [\"AGE\", \"CHR\", \"INT\", \"STR\", \"MNY\"]:
@@ -102,8 +115,15 @@ func _update_ui_scale() -> void:
 				child.label_settings = label_settings
 	
 	# 更新按钮字体和大小
-	var button_height = max(30, int(viewport_height * 0.045))
-	var button_width = max(75, int(viewport_size.x * 0.08))
+	var button_height: int
+	var button_width: int
+	
+	if is_portrait:
+		button_height = max(28, int(viewport_height * 0.04))
+		button_width = max(65, int(viewport_width * 0.16))
+	else:
+		button_height = max(30, int(viewport_height * 0.045))
+		button_width = max(75, int(viewport_size.x * 0.08))
 	
 	$CanvasLayer/VBoxContainer/StatusHBox/AutoBtn.custom_minimum_size = Vector2(button_width, button_height)
 	$CanvasLayer/VBoxContainer/StatusHBox/AutoBtn.pivot_offset = Vector2(button_width, button_height) / 2.0
@@ -150,11 +170,18 @@ func _unhandled_input(event: InputEvent) -> void:
 				# 标记事件已处理
 				get_viewport().set_input_as_handled()
 	
-	# 检测屏幕触摸（移动端长按）
+	# 检测屏幕触摸（移动端）- 只处理长按，不阻止滚动
 	if event is InputEventScreenTouch:
 		if event.pressed:
-			is_long_pressing = true
-			long_press_timer.start()
+			# 检查触摸位置是否在 ScrollContainer 区域内
+			var touch_pos = event.position
+			var scroll_container = $CanvasLayer/VBoxContainer/MarginContainer/ScrollContainer
+			var rect = scroll_container.get_global_rect()
+			
+			if rect.has_point(touch_pos):
+				# 在 ScrollContainer 内，启动长按计时器
+				is_long_pressing = true
+				long_press_timer.start()
 		else:
 			if is_long_pressing:
 				is_long_pressing = false

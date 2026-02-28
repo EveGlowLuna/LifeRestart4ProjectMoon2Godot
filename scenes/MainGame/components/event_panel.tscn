@@ -3,6 +3,51 @@
 [ext_resource type="Theme" uid="uid://bbq35equ60ywl" path="res://assets/eventlevels/rate_0.tres" id="1_378ma"]
 [ext_resource type="FontFile" uid="uid://dcn1l74b2ial1" path="res://assets/ChineseFont.ttf" id="2_font"]
 
+[sub_resource type="GDScript" id="GDScript_event_panel"]
+script/source = "extends Panel
+
+func _ready() -> void:
+	get_viewport().size_changed.connect(_update_ui_scale)
+	call_deferred(\"_update_ui_scale\")
+
+func _update_ui_scale() -> void:
+	var viewport_size = get_viewport_rect().size
+	var viewport_height = viewport_size.y
+	var viewport_width = viewport_size.x
+	
+	# 判断是否为竖屏模式
+	var is_portrait = viewport_height > viewport_width
+	
+	# 计算字体大小和面板高度
+	var font_size: int
+	var panel_height: int
+	
+	if is_portrait:
+		font_size = max(12, int(viewport_width * 0.032))  # 从0.036改为0.032，字体更小
+		panel_height = max(40, int(viewport_height * 0.048))  # 从0.055改为0.048，面板更矮
+	else:
+		font_size = max(15, int(viewport_height * 0.024))
+		panel_height = 50
+	
+	# 更新面板高度
+	custom_minimum_size.y = panel_height
+	
+	# 更新字体和换行设置
+	var label = $Label
+	var label_settings = LabelSettings.new()
+	label_settings.font = label.label_settings.font
+	label_settings.font_size = font_size
+	label.label_settings = label_settings
+	
+	# 竖屏模式启用换行
+	if is_portrait:
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.max_lines_visible = 3  # 最多显示3行
+	else:
+		label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		label.max_lines_visible = 2  # 横屏保持2行
+"
+
 [sub_resource type="LabelSettings" id="LabelSettings_h25tl"]
 font = ExtResource("2_font")
 
@@ -12,6 +57,7 @@ offset_right = 157.0
 offset_bottom = 40.0
 mouse_filter = 2
 theme = ExtResource("1_378ma")
+script = SubResource("GDScript_event_panel")
 
 [node name="Label" type="Label" parent="." unique_id=251464527]
 layout_mode = 1

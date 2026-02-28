@@ -40,6 +40,9 @@ var judgement:Dictionary = {
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	call_deferred(\"_update_ui_scale\")
+	
 	# 先计算总评
 	EventManager.propertydata_ins.status[PropertyData.Types.SUM] = EventManager.propertydata_ins.calculate_sum()
 	
@@ -76,6 +79,88 @@ func _ready() -> void:
 	
 	# 填充OptionButton
 	_populate_talent_options()
+
+func _on_viewport_size_changed() -> void:
+	_update_ui_scale()
+
+func _update_ui_scale() -> void:
+	var viewport_size = get_viewport_rect().size
+	var viewport_height = viewport_size.y
+	var viewport_width = viewport_size.x
+	
+	# 判断是否为竖屏模式
+	var is_portrait = viewport_height > viewport_width
+	
+	# 标题字体
+	var title_font_size: int
+	if is_portrait:
+		title_font_size = max(20, int(viewport_width * 0.065))
+	else:
+		title_font_size = max(25, int(viewport_height * 0.045))
+	
+	var title_settings = LabelSettings.new()
+	title_settings.font = $CanvasLayer/ColorRect/TitleLabel.label_settings.font
+	title_settings.font_size = title_font_size
+	$CanvasLayer/ColorRect/TitleLabel.label_settings = title_settings
+	
+	# StatusSum 容器大小调整
+	var statussum_width: int
+	var statussum_height: int
+	
+	if is_portrait:
+		statussum_width = int(viewport_width * 0.9)
+		statussum_height = int(viewport_height * 0.45)
+	else:
+		statussum_width = 600
+		statussum_height = 274
+	
+	$CanvasLayer/ColorRect/StatusSum.custom_minimum_size = Vector2(statussum_width, statussum_height)
+	
+	# 天赋选择标签字体
+	var label_font_size: int
+	if is_portrait:
+		label_font_size = max(12, int(viewport_width * 0.032))
+	else:
+		label_font_size = max(14, int(viewport_height * 0.022))
+	
+	var label_settings = LabelSettings.new()
+	label_settings.font = $CanvasLayer/ColorRect/HBoxContainer/Label.label_settings.font
+	label_settings.font_size = label_font_size
+	$CanvasLayer/ColorRect/HBoxContainer/Label.label_settings = label_settings
+	
+	# OptionButton字体
+	var option_font_size: int
+	if is_portrait:
+		option_font_size = max(12, int(viewport_width * 0.032))
+	else:
+		option_font_size = max(14, int(viewport_height * 0.022))
+	
+	$CanvasLayer/ColorRect/HBoxContainer/OptionButton.begin_bulk_theme_override()
+	$CanvasLayer/ColorRect/HBoxContainer/OptionButton.add_theme_font_size_override(\"font_size\", option_font_size)
+	$CanvasLayer/ColorRect/HBoxContainer/OptionButton.end_bulk_theme_override()
+	
+	# 更新 popup 菜单的字体
+	var popup = $CanvasLayer/ColorRect/HBoxContainer/OptionButton.get_popup()
+	popup.add_theme_font_size_override(\"font_size\", option_font_size)
+	
+	# 返回按钮字体和大小
+	var button_font_size: int
+	var button_height: int
+	var button_width: int
+	
+	if is_portrait:
+		button_font_size = max(14, int(viewport_width * 0.038))
+		button_height = max(35, int(viewport_height * 0.05))
+		button_width = max(120, int(viewport_width * 0.35))
+	else:
+		button_font_size = max(16, int(viewport_height * 0.025))
+		button_height = max(40, int(viewport_height * 0.06))
+		button_width = max(150, int(viewport_width * 0.15))
+	
+	$CanvasLayer/Button.custom_minimum_size = Vector2(button_width, button_height)
+	$CanvasLayer/Button.begin_bulk_theme_override()
+	$CanvasLayer/Button.add_theme_font_size_override(\"font_size\", button_font_size)
+	$CanvasLayer/Button.end_bulk_theme_override()
 
 func show_summary():
 	for i in judgement:
@@ -231,7 +316,7 @@ offset_bottom = 136.74399
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/ColorRect" unique_id=1726926768]
+[node name="HBoxContainer" type="VBoxContainer" parent="CanvasLayer/ColorRect" unique_id=1419838266]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
@@ -251,7 +336,7 @@ text = "选择一个天赋，下一轮你还可以遇到："
 label_settings = SubResource("LabelSettings_3lieh")
 
 [node name="PlaceHolder" type="Control" parent="CanvasLayer/ColorRect/HBoxContainer" unique_id=758653235]
-custom_minimum_size = Vector2(20, 0)
+custom_minimum_size = Vector2(20, 10)
 layout_mode = 2
 
 [node name="OptionButton" type="OptionButton" parent="CanvasLayer/ColorRect/HBoxContainer" unique_id=8092654]
