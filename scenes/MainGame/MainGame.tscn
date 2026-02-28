@@ -226,26 +226,21 @@ func _display_event_recursive(event_data: Dictionary, is_first: bool = true):
 	# 检查是否有branch
 	var has_branch = \"branch\" in event_data and event_data[\"branch\"] != null
 	
-	# 如果有branch，只显示postEvent（如果有），然后递归处理branch
+	# 先显示主事件的description
+	if \"description\" in event_data and event_data[\"description\"] != \"\":
+		var msg = event_data[\"description\"]
+		if is_first:
+			msg = str(EventManager.propertydata_ins.status[PropertyData.Types.AGE]) + \"岁: \" + msg
+		_add_event_panel(msg, event_data.get(\"grade\", 0))
+	
+	# 显示主事件的postEvent（如果有）
+	if \"postEvent\" in event_data and event_data[\"postEvent\"] != null:
+		var postmsg = event_data[\"postEvent\"].replace(\"\\n\", \"  \")
+		_add_event_panel(postmsg, event_data.get(\"grade\", 0))
+	
+	# 如果有branch，递归处理分支事件
 	if has_branch:
-		# 显示当前事件的postEvent（如果有）
-		if \"postEvent\" in event_data and event_data[\"postEvent\"] != null:
-			var postmsg = event_data[\"postEvent\"].replace(\"\\n\", \"  \")
-			_add_event_panel(postmsg, event_data.get(\"grade\", 0))
-		# 递归处理branch
-		_display_event_recursive(event_data[\"branch\"], is_first)
-	else:
-		# 没有branch，正常显示description和postEvent
-		if \"description\" in event_data and event_data[\"description\"] != \"\":
-			var msg = event_data[\"description\"]
-			if is_first:
-				msg = str(EventManager.propertydata_ins.status[PropertyData.Types.AGE]) + \"岁: \" + msg
-			_add_event_panel(msg, event_data.get(\"grade\", 0))
-		
-		# 显示postEvent
-		if \"postEvent\" in event_data and event_data[\"postEvent\"] != null:
-			var postmsg = event_data[\"postEvent\"].replace(\"\\n\", \"  \")
-			_add_event_panel(postmsg, event_data.get(\"grade\", 0))
+		_display_event_recursive(event_data[\"branch\"], false)
 
 func can_scroll() -> bool:
 	return $CanvasLayer/VBoxContainer/MarginContainer/ScrollContainer.get_v_scroll_bar().max_value > 0
