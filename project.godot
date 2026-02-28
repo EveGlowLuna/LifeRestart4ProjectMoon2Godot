@@ -15,7 +15,7 @@ run/main_scene="uid://dcs8hd85x5vgx"
 config/features=PackedStringArray("4.6", "Forward Plus")
 boot_splash/show_image=false
 boot_splash/use_filter=false
-config/icon="res://icon.svg"
+config/icon="uid://dmf8ptn6g8ssj"
 
 [autoload]
 
@@ -34,7 +34,7 @@ project/assembly_name="LifeRestart4ProjectMoon"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/safe_area_x/plugin.cfg")
+enabled=PackedStringArray()
 
 [physics]
 

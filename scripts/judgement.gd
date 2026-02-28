@@ -70,11 +70,11 @@ var HINT_judgement: Dictionary = {
 	JudgementLevel.level: 3
 	},
 	21: {
-	JudgementLevel.judge: "你怎么这么强？",
+	JudgementLevel.judge: "有点强，，，",
 	JudgementLevel.level: 3
 	},
 	131: {
-	JudgementLevel.judge: "你怎么这么强？",
+	JudgementLevel.judge: "这么强？！",
 	JudgementLevel.level: 3
 	},
 	501: {
@@ -113,11 +113,11 @@ var HSTR_judgement: Dictionary = {
 	JudgementLevel.level: 3
 	},
 	21: {
-	JudgementLevel.judge: "你怎么这么强？",
+	JudgementLevel.judge: "有点强，，，",
 	JudgementLevel.level: 3
 	},
 	101: {
-	JudgementLevel.judge: "你怎么这么强？",
+	JudgementLevel.judge: "这么强？！",
 	JudgementLevel.level: 3
 	},
 	401: {
@@ -257,11 +257,11 @@ var SUM_judgement: Dictionary = {
 		JudgementLevel.level: 0 
 	}, 
 	50: { 
-		JudgementLevel.judge: "NPC", 
+		JudgementLevel.judge: "普通", 
 		JudgementLevel.level: 0 
 	}, 
 	60: { 
-		JudgementLevel.judge: "普通", 
+		JudgementLevel.judge: "有点强，，，", 
 		JudgementLevel.level: 0 
 	}, 
 	80: { 
