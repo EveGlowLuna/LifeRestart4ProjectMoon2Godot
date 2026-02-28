@@ -14,6 +14,11 @@
 
 - 同时支持Android/Windows、macOS/Linux四端。在 **Release 页面**下载。
 
+### 警告
+
+- macOS端由于禁用公证，从网站下载的程序可能会被Gatekeeper阻止运行。
+- macOS端代码签名仅用临时签名，程序会被Gatekeeper阻止。
+
 暂不支持的功能：
 
 - 存档转移。
